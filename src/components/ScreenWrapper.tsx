@@ -1,31 +1,50 @@
-import React from "react";
-import {View, StyleSheet, ViewStyle, StyleProp} from "react-native";
+import React, {useState} from "react";
+import {StyleSheet, ViewStyle, RefreshControl, ScrollView} from "react-native";
 import {useTheme} from "@react-navigation/native";
 
-interface ScreenWrapperProps {
+interface Props {
   children: React.ReactNode;
-  style?: StyleProp<ViewStyle>;
-  testID?: string;
+  style?: ViewStyle;
+  onRefresh?: () => Promise<void> | void;
 }
 
-const ScreenWrapper: React.FC<ScreenWrapperProps> = ({
-  children,
-  testID,
-  style,
-}) => {
+const ScreenWrapper: React.FC<Props> = ({children, style, onRefresh}) => {
   const {colors} = useTheme();
+  const [refreshing, setRefreshing] = useState(false);
+
+  async function handleRefresh() {
+    console.log("FIRE");
+    if (onRefresh) {
+      setRefreshing(true);
+      try {
+        await onRefresh();
+      } finally {
+        setRefreshing(false);
+      }
+    }
+  }
 
   return (
-    <View
-      testID={testID}
-      style={[styles.wrapper, {backgroundColor: colors.background}, style]}>
+    <ScrollView
+      contentContainerStyle={[
+        styles.wrapper,
+        {backgroundColor: colors.background},
+        style,
+      ]}
+      refreshControl={
+        onRefresh ? (
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            colors={[colors.primary]}
+          />
+        ) : undefined
+      }>
       {children}
-    </View>
+    </ScrollView>
   );
 };
 
 export default ScreenWrapper;
 
-const styles = StyleSheet.create({
-  wrapper: {flex: 1, padding: 24},
-});
+const styles = StyleSheet.create({wrapper: {flexGrow: 1, padding: 24}});
