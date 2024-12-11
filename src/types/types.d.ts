@@ -42,10 +42,11 @@ declare global {
     description: string;
     image: string;
     userID: string;
-    rentedPeriods: {
-      start: string;
-      end: string;
-    }[];
+    // rentedPeriods: {
+    //   start: string;
+    //   end: string;
+    // }[];
+    rentedPeriods: string;
   };
 
   type User = {

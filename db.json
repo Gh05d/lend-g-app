@@ -5,164 +5,140 @@
       "userId": "1",
       "title": "Camera",
       "price": "$10/day",
-      "rentedPeriods": [
-        {
-          "start": "2024-12-01",
-          "end": "2024-12-10"
-        },
-        {
-          "start": "2024-12-15",
-          "end": "2024-12-20"
-        }
-      ]
+      "rentedPeriods": "2024-12-01:2024-12-10,2024-12-15:2024-12-20"
     },
     {
       "id": "2",
       "userId": "2",
       "title": "Bike",
       "price": "$15/day",
-      "rentedPeriods": [
-        {
-          "start": "2024-11-01",
-          "end": "2024-11-20"
-        }
-      ]
+      "rentedPeriods": "2024-11-01:2024-11-20"
     },
     {
       "id": "3",
       "userId": "3",
       "title": "Tent",
       "price": "$5/day",
-      "rentedPeriods": []
+      "rentedPeriods": ""
     },
     {
       "id": "4",
       "userId": "4",
       "title": "Laptop",
       "price": "$20/day",
-      "rentedPeriods": [
-        {
-          "start": "2024-12-05",
-          "end": "2024-12-07"
-        }
-      ]
+      "rentedPeriods": "2024-12-05:2024-12-07"
     },
     {
       "id": "5",
       "userId": "5",
       "title": "Drill Machine",
       "price": "$8/day",
-      "rentedPeriods": []
+      "rentedPeriods": ""
     },
     {
       "id": "6",
       "userId": "6",
       "title": "Guitar",
       "price": "$12/day",
-      "rentedPeriods": []
+      "rentedPeriods": ""
     },
     {
       "id": "7",
       "userId": "7",
       "title": "Projector",
       "price": "$18/day",
-      "rentedPeriods": []
+      "rentedPeriods": ""
     },
     {
       "id": "8",
       "userId": "8",
       "title": "Camping Stove",
       "price": "$7/day",
-      "rentedPeriods": []
+      "rentedPeriods": ""
     },
     {
       "id": "9",
       "userId": "9",
       "title": "Electric Scooter",
       "price": "$25/day",
-      "rentedPeriods": [
-        {
-          "start": "2024-12-01",
-          "end": "2024-12-03"
-        }
-      ]
+      "rentedPeriods": "2024-12-01:2024-12-03"
     },
     {
       "id": "10",
       "userId": "10",
       "title": "Tripod",
       "price": "$4/day",
-      "rentedPeriods": []
+      "rentedPeriods": ""
     },
     {
       "id": "11",
       "userId": "11",
       "title": "Gaming Console",
       "price": "$15/day",
-      "rentedPeriods": []
+      "rentedPeriods": ""
     },
     {
       "id": "12",
       "userId": "12",
       "title": "Lawn Mower",
       "price": "$10/day",
-      "rentedPeriods": []
+      "rentedPeriods": ""
     },
     {
       "id": "13",
       "userId": "13",
       "title": "Kayak",
       "price": "$30/day",
-      "rentedPeriods": []
+      "rentedPeriods": ""
     },
     {
       "id": "14",
       "userId": "14",
       "title": "Snowboard",
       "price": "$20/day",
-      "rentedPeriods": []
+      "rentedPeriods": ""
     },
     {
       "id": "15",
       "userId": "15",
       "title": "Barbecue Grill",
       "price": "$12/day",
-      "rentedPeriods": []
+      "rentedPeriods": ""
     },
     {
       "id": "16",
       "userId": "16",
       "title": "Microscope",
       "price": "$10/day",
-      "rentedPeriods": []
+      "rentedPeriods": ""
     },
     {
       "id": "17",
       "userId": "17",
       "title": "VR Headset",
       "price": "$15/day",
-      "rentedPeriods": []
+      "rentedPeriods": ""
     },
     {
       "id": "18",
       "userId": "18",
       "title": "Telescope",
       "price": "$20/day",
-      "rentedPeriods": []
+      "rentedPeriods": ""
     },
     {
       "id": "19",
       "userId": "19",
       "title": "Canoe",
       "price": "$25/day",
-      "rentedPeriods": []
+      "rentedPeriods": ""
     },
     {
       "id": "20",
       "userId": "20",
       "title": "DJ Equipment",
       "price": "$35/day",
-      "rentedPeriods": []
+      "rentedPeriods": ""
     }
   ]
 }
