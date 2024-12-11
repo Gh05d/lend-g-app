@@ -1,6 +1,6 @@
 export type StackParamList = {
   HomeScreen: undefined;
-  ItemDetails: undefined;
+  ItemDetails: {id: string};
 };
 
 export type TabParamList = {

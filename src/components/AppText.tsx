@@ -6,16 +6,10 @@ interface Props extends TextProps {
   style?: StyleProp<TextStyle>;
   bold?: boolean;
   italic?: boolean;
-  /** All the props a Text component normally accepts */
-  textProps?: StyleProp<TextStyle>;
   children: React.ReactNode;
   testID?: string;
 }
 
-/**
- * @description Basic Text component whose font can be chosen
- * @component
- */
 const AppText: React.FC<Props> = ({
   children,
   style,
@@ -25,18 +19,19 @@ const AppText: React.FC<Props> = ({
   ...textProps
 }) => {
   const {colors} = useTheme();
-  const fontSize = (Platform as any).isPad
-    ? 20
-    : style && typeof style === "object" && "fontSize" in style
-    ? style.fontSize
-    : Platform.OS == "ios"
-    ? 16
-    : 14;
 
-  const lineHeight = fontSize * 1.25;
+  const fontSize =
+    Platform.OS === "ios" ? 16 : Platform.OS === "android" ? 14 : 20;
+
+  const computedFontSize =
+    style && typeof style === "object" && "fontSize" in style
+      ? (style.fontSize as number)
+      : fontSize;
+
+  const lineHeight = Math.round(computedFontSize * 1.5);
 
   const textStyles: StyleProp<TextStyle> = {
-    fontSize,
+    fontSize: computedFontSize,
     lineHeight,
     fontWeight: bold ? "bold" : "normal",
     fontStyle: italic ? "italic" : "normal",

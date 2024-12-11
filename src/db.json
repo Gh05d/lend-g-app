@@ -1,0 +1,164 @@
+{
+  "items": [
+    {
+      "id": "1",
+      "title": "Camera",
+      "category": "Electronics",
+      "price": "$10/day",
+      "description": "A high-quality camera perfect for capturing moments.",
+      "image": "https://via.placeholder.com/150?text=Camera"
+    },
+    {
+      "id": "2",
+      "title": "Bike",
+      "category": "Vehicles",
+      "price": "$15/day",
+      "description": "A sturdy bike suitable for city or mountain rides.",
+      "image": "https://via.placeholder.com/150?text=Bike"
+    },
+    {
+      "id": "3",
+      "title": "Tent",
+      "category": "Camping",
+      "price": "$5/day",
+      "description": "A spacious tent for camping adventures.",
+      "image": "https://via.placeholder.com/150?text=Tent"
+    },
+    {
+      "id": "4",
+      "title": "Laptop",
+      "category": "Electronics",
+      "price": "$20/day",
+      "description": "A powerful laptop for work or gaming.",
+      "image": "https://via.placeholder.com/150?text=Laptop"
+    },
+    {
+      "id": "5",
+      "title": "Drill Machine",
+      "category": "Tools",
+      "price": "$8/day",
+      "description": "An electric drill for all your DIY needs.",
+      "image": "https://via.placeholder.com/150?text=Drill+Machine"
+    },
+    {
+      "id": "6",
+      "title": "Guitar",
+      "category": "Music",
+      "price": "$12/day",
+      "description": "An acoustic guitar perfect for beginners and pros alike.",
+      "image": "https://via.placeholder.com/150?text=Guitar"
+    },
+    {
+      "id": "7",
+      "title": "Projector",
+      "category": "Electronics",
+      "price": "$18/day",
+      "description": "A portable projector for presentations or movie nights.",
+      "image": "https://via.placeholder.com/150?text=Projector"
+    },
+    {
+      "id": "8",
+      "title": "Camping Stove",
+      "category": "Camping",
+      "price": "$7/day",
+      "description": "A compact stove for outdoor cooking.",
+      "image": "https://via.placeholder.com/150?text=Camping+Stove"
+    },
+    {
+      "id": "9",
+      "title": "Electric Scooter",
+      "category": "Vehicles",
+      "price": "$25/day",
+      "description": "A fast and efficient electric scooter for commuting.",
+      "image": "https://via.placeholder.com/150?text=Electric+Scooter"
+    },
+    {
+      "id": "10",
+      "title": "Tripod",
+      "category": "Photography",
+      "price": "$4/day",
+      "description": "A sturdy tripod for stable photography.",
+      "image": "https://via.placeholder.com/150?text=Tripod"
+    },
+    {
+      "id": "11",
+      "title": "Gaming Console",
+      "category": "Electronics",
+      "price": "$15/day",
+      "description": "A gaming console with the latest games included.",
+      "image": "https://via.placeholder.com/150?text=Gaming+Console"
+    },
+    {
+      "id": "12",
+      "title": "Lawn Mower",
+      "category": "Gardening",
+      "price": "$10/day",
+      "description": "An easy-to-use lawn mower for a tidy garden.",
+      "image": "https://via.placeholder.com/150?text=Lawn+Mower"
+    },
+    {
+      "id": "13",
+      "title": "Kayak",
+      "category": "Water Sports",
+      "price": "$30/day",
+      "description": "A durable kayak for rivers or lakes.",
+      "image": "https://via.placeholder.com/150?text=Kayak"
+    },
+    {
+      "id": "14",
+      "title": "Snowboard",
+      "category": "Winter Sports",
+      "price": "$20/day",
+      "description": "A high-performance snowboard for winter fun.",
+      "image": "https://via.placeholder.com/150?text=Snowboard"
+    },
+    {
+      "id": "15",
+      "title": "Barbecue Grill",
+      "category": "Outdoor",
+      "price": "$12/day",
+      "description": "A portable grill for BBQ parties.",
+      "image": "https://via.placeholder.com/150?text=Barbecue+Grill"
+    },
+    {
+      "id": "16",
+      "title": "Microscope",
+      "category": "Science",
+      "price": "$10/day",
+      "description": "A microscope for scientific exploration.",
+      "image": "https://via.placeholder.com/150?text=Microscope"
+    },
+    {
+      "id": "17",
+      "title": "VR Headset",
+      "category": "Gaming",
+      "price": "$15/day",
+      "description": "A VR headset for immersive gaming experiences.",
+      "image": "https://via.placeholder.com/150?text=VR+Headset"
+    },
+    {
+      "id": "18",
+      "title": "Telescope",
+      "category": "Science",
+      "price": "$20/day",
+      "description": "A telescope for stargazing and astronomy.",
+      "image": "https://via.placeholder.com/150?text=Telescope"
+    },
+    {
+      "id": "19",
+      "title": "Canoe",
+      "category": "Water Sports",
+      "price": "$25/day",
+      "description": "A lightweight canoe for paddling adventures.",
+      "image": "https://via.placeholder.com/150?text=Canoe"
+    },
+    {
+      "id": "20",
+      "title": "DJ Equipment",
+      "category": "Music",
+      "price": "$35/day",
+      "description": "Professional DJ equipment for events.",
+      "image": "https://via.placeholder.com/150?text=DJ+Equipment"
+    }
+  ]
+}
