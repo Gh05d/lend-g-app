@@ -1,11 +1,7 @@
 import React from "react";
 import {useColorScheme} from "react-native";
 import SplashScreen from "./components/Splash";
-import {
-  NavigationContainer,
-  DefaultTheme,
-  DarkTheme,
-} from "@react-navigation/native";
+import {NavigationContainer} from "@react-navigation/native";
 import {createDrawerNavigator} from "@react-navigation/drawer";
 import {createBottomTabNavigator} from "@react-navigation/bottom-tabs";
 import {createStackNavigator} from "@react-navigation/stack";
@@ -24,37 +20,11 @@ import HelpScreen from "./screens/sidebar/HelpScreen";
 import InviteScreen from "./screens/sidebar/InviteScreen";
 import AboutScreen from "./screens/sidebar/AboutScreen";
 import ItemDetailsScreen from "./screens/tabs/ItemDetailsScreen";
-import {DrawerParamList, StackParamList, TabParamList} from "./types";
+import {CustomDarkTheme, CustomLightTheme} from "./themes";
 
 const Drawer = createDrawerNavigator<DrawerParamList>();
 const Tab = createBottomTabNavigator<TabParamList>();
 const Stack = createStackNavigator<StackParamList>();
-
-const CustomLightTheme = {
-  ...DefaultTheme,
-  colors: {
-    ...DefaultTheme.colors,
-    primary: "#f6812c",
-    background: "#FFFFFF",
-    card: "#F8F8F8",
-    text: "#212121",
-    border: "#E0E0E0",
-    notification: "#FF5722",
-  },
-};
-
-const CustomDarkTheme = {
-  ...DarkTheme,
-  colors: {
-    ...DarkTheme.colors,
-    primary: "#f6812c",
-    background: "#121212",
-    card: "#1E1E1E",
-    text: "#FFFFFF",
-    border: "#333333",
-    notification: "#FF7043",
-  },
-};
 
 const renderHeader = (title: string): JSX.Element => <Header title={title} />;
 
@@ -109,7 +79,11 @@ const BottomTabs: React.FC = () => (
   </Tab.Navigator>
 );
 
-const drawerScreens = [
+const drawerScreens: Array<{
+  name: keyof DrawerParamList;
+  component: React.ComponentType<any>;
+  title: string;
+}> = [
   {name: "Tabs", component: BottomTabs, title: "Home"},
   {
     name: "Notifications",

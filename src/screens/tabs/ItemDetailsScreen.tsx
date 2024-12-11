@@ -1,43 +1,54 @@
-import React from "react";
+import React, {useEffect, useState} from "react";
 import {StyleSheet} from "react-native";
 import {useTheme} from "@react-navigation/native";
-import type {NativeStackScreenProps} from "@react-navigation/native-stack";
+import axios from "axios";
+import type {StackScreenProps} from "@react-navigation/stack";
 
 import ScreenWrapper from "../../components/ScreenWrapper";
 import AppText from "../../components/AppText";
+import Error from "../../components/Error";
+import Loading from "../../components/Loading";
 
-import {StackParamList} from "../../types";
-import {mockItems} from "../../mock-api";
-
-type Props = NativeStackScreenProps<StackParamList, "ItemDetails">;
+type Props = StackScreenProps<StackParamList, "ItemDetails">;
 
 const ItemDetailsScreen: React.FC<Props> = ({route}) => {
-  const {id} = route.params;
-  const item = mockItems.find(value => value.id === id);
+  const {id, userID} = route.params;
+  const [item, setItem] = useState<Item | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<null | Error>(null);
 
   const {colors} = useTheme();
 
-  if (!item) {
-    return (
-      <ScreenWrapper>
-        <AppText style={[styles.errorText, {color: colors.notification}]}>
-          Item not found.
-        </AppText>
-      </ScreenWrapper>
-    );
-  }
+  useEffect(() => {
+    (async function fetchItem() {
+      try {
+        const {data} = await axios.get<Item>(
+          `http://my-json-server.typicode.com/Gh05d/lend-g-app/items/${id}`,
+        );
+
+        setItem(data);
+      } catch (err) {
+        setError(err as Error);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [id]);
+
+  if (loading) return <Loading text="Lade Angebote" />;
+  if (error) return <Error fullScreen error={error} />;
 
   return (
     <ScreenWrapper>
       <AppText bold style={styles.title}>
-        {item.title}
+        {item!.title}
       </AppText>
-      <AppText style={styles.category}>{item.category}</AppText>
+      <AppText style={styles.category}>{item!.category}</AppText>
       <AppText bold style={[styles.price, {color: colors.primary}]}>
-        {item.price}
+        {item!.price}
       </AppText>
       <AppText style={styles.description}>
-        Description: {item.description || "No description available."}
+        Description: {item!.description}
       </AppText>
     </ScreenWrapper>
   );

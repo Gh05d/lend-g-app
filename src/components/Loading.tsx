@@ -7,14 +7,14 @@ import {
   View,
   ViewStyle,
 } from "react-native";
+import {useTheme} from "@react-navigation/native";
+
 import AppText from "./AppText";
+import ScreenWrapper from "./ScreenWrapper";
 
 interface Props {
-  /** The text to be displayed. Defaults to Loading */
   text?: string;
-  /** Component does not cover full page */
   inline?: boolean;
-  /** Either "large" or "small", defaults to "large" */
   size?: "small" | "large";
   style?: StyleProp<ViewStyle>;
   textStyle?: StyleProp<TextStyle>;
@@ -22,7 +22,7 @@ interface Props {
 }
 
 const Loading: React.FC<Props> = ({
-  text = "Lade Seite",
+  text = "Loading",
   inline,
   style,
   textStyle,
@@ -30,25 +30,25 @@ const Loading: React.FC<Props> = ({
   size = "large",
   ...rest
 }) => {
+  const {colors} = useTheme();
+
+  const Wrapper = inline ? View : ScreenWrapper;
+
   return (
-    <View
-      style={
-        inline ? [styles.basic, style] : [styles.basic, styles.fullPage, style]
-      }
-      testID={testID}>
-      <AppText style={[{color: "#bbb"}, textStyle]}>{text}...</AppText>
-      <ActivityIndicator color={"#f00"} size={size} {...rest} />
-    </View>
+    <Wrapper style={[styles.container, style]} testID={testID}>
+      <AppText style={[{color: colors.primary}, textStyle]}>{text}...</AppText>
+      <ActivityIndicator color={colors.primary} size={size} {...rest} />
+    </Wrapper>
   );
 };
 
+export default Loading;
+
 const styles = StyleSheet.create({
-  basic: {
-    backgroundColor: "#fff",
+  container: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
   },
-  fullPage: {flex: 1, justifyContent: "center"},
 });
-
-export default Loading;
