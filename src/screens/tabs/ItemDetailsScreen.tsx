@@ -6,8 +6,6 @@ import type {StackScreenProps} from "@react-navigation/stack";
 
 import ScreenWrapper from "../../components/ScreenWrapper";
 import AppText from "../../components/AppText";
-import Error from "../../components/Error";
-import Loading from "../../components/Loading";
 
 type Props = StackScreenProps<StackParamList, "ItemDetails">;
 
@@ -22,13 +20,16 @@ const ItemDetailsScreen: React.FC<Props> = ({route}) => {
   useEffect(() => {
     (async function fetchItem() {
       try {
+        console.log(id, "test");
         const {data} = await axios.get<Item>(
           `http://my-json-server.typicode.com/Gh05d/lend-g-app/items/${id}`,
         );
 
-        const {data: d2} = await axios(`https://dummyjson.com/users/${userID}`);
+        console.log({data, userID});
 
-        console.log(d2);
+        const res = await axios(`https://dummyjson.com/users/${userID}`);
+
+        console.log("--->", userID, res);
 
         setItem(data);
       } catch (err) {
@@ -37,13 +38,14 @@ const ItemDetailsScreen: React.FC<Props> = ({route}) => {
         setLoading(false);
       }
     })();
-  }, [id]);
+  }, [id, userID]);
 
-  if (loading) return <Loading text="Lade Angebote" />;
-  if (error) return <Error fullScreen error={error} />;
+  console.log(item);
+
+  if (!item) return null;
 
   return (
-    <ScreenWrapper>
+    <ScreenWrapper loading={loading} error={error}>
       <AppText bold style={styles.title}>
         {item!.title}
       </AppText>
