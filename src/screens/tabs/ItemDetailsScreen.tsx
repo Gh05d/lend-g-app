@@ -26,6 +26,10 @@ const ItemDetailsScreen: React.FC<Props> = ({route}) => {
           `http://my-json-server.typicode.com/Gh05d/lend-g-app/items/${id}`,
         );
 
+        const {data: d2} = await axios(`https://dummyjson.com/users/${userID}`);
+
+        console.log(d2);
+
         setItem(data);
       } catch (err) {
         setError(err as Error);
