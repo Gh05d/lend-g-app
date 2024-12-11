@@ -10,7 +10,6 @@ import {
 import {useTheme} from "@react-navigation/native";
 
 import AppText from "./AppText";
-import ScreenWrapper from "./ScreenWrapper";
 
 interface Props {
   text?: string;
@@ -23,7 +22,6 @@ interface Props {
 
 const Loading: React.FC<Props> = ({
   text = "Loading",
-  inline,
   style,
   textStyle,
   testID,
@@ -32,13 +30,11 @@ const Loading: React.FC<Props> = ({
 }) => {
   const {colors} = useTheme();
 
-  const Wrapper = inline ? View : ScreenWrapper;
-
   return (
-    <Wrapper style={[styles.container, style]} testID={testID}>
+    <View style={[styles.container, style]} testID={testID}>
       <AppText style={[{color: colors.primary}, textStyle]}>{text}...</AppText>
       <ActivityIndicator color={colors.primary} size={size} {...rest} />
-    </Wrapper>
+    </View>
   );
 };
 

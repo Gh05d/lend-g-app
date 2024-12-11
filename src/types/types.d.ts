@@ -13,12 +13,16 @@ declare module "@react-navigation/native" {
 
 declare global {
   type StackParamList = {
+    Drawer: undefined;
     HomeScreen: undefined;
     ItemDetails: {id: string; userID: string};
   };
 
   type TabParamList = {
-    Home: undefined;
+    Home: {
+      screen: keyof StackParamList;
+      params?: StackParamList[keyof StackParamList];
+    };
     Loans: undefined;
     Explore: undefined;
     Chat: undefined;

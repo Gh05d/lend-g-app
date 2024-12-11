@@ -1,6 +1,7 @@
 import React from "react";
 import {View, StyleSheet, ViewStyle, StyleProp} from "react-native";
 import {useTheme} from "@react-navigation/native";
+
 import Loading from "./Loading";
 import Error from "./Error";
 
@@ -23,7 +24,7 @@ const ScreenWrapper: React.FC<ScreenWrapperProps> = ({
 
   function renderView() {
     if (loading) return <Loading text="Lade Angebote" />;
-    if (error) return <Error fullScreen error={error} />;
+    if (error) return <Error error={error} />;
     return children;
   }
 
