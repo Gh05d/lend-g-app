@@ -11,7 +11,6 @@ import ScreenWrapper from "../../components/ScreenWrapper";
 import AppText from "../../components/AppText";
 
 import {StackParamList, TabParamList, DrawerParamList} from "../../types";
-import {mockItems} from "../../mock-api";
 
 type Props = CompositeScreenProps<
   BottomTabScreenProps<TabParamList, "Home">,
