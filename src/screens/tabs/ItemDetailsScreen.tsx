@@ -1,35 +1,22 @@
 import React, {useEffect, useState} from "react";
-import {StyleSheet, View, Image, Modal} from "react-native";
+import {StyleSheet, View, Image} from "react-native";
 import {useTheme} from "@react-navigation/native";
 import axios from "axios";
 import type {StackScreenProps} from "@react-navigation/stack";
-import DateTimePicker from "react-native-ui-datepicker";
 
 import ScreenWrapper from "../../components/ScreenWrapper";
 import AppText from "../../components/AppText";
 import AppButton from "../../components/AppButton";
+import DatePickerModal from "../../components/modals/DatePickerModal";
 
 type Props = StackScreenProps<StackParamList, "ItemDetails">;
-
-function parseRentedPeriods(rentedPeriods: string) {
-  console.log(rentedPeriods);
-  return rentedPeriods.split(",").map(range => {
-    const [start, end] = range.split(":");
-    const startDate = new Date(start.trim());
-    const endDate = new Date(end.trim());
-    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-      throw new Error(`Invalid date range: ${range}`);
-    }
-    return {startDate, endDate};
-  });
-}
 
 const ItemDetailsScreen: React.FC<Props> = ({route}) => {
   const {id, userID} = route.params;
   const [item, setItem] = useState<Item | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [show, setShow] = React.useState(false);
-  const [selectedDateRange, setSelectedDateRange] = useState({
+  const [selectedDateRange, setSelectedDateRange] = useState<DateRangeType>({
     startDate: null,
     endDate: null,
   });
@@ -68,11 +55,48 @@ const ItemDetailsScreen: React.FC<Props> = ({route}) => {
       )
     : true;
 
-  const onChange = params => setSelectedDateRange(params);
+  function parseRentedPeriods(rentedPeriods: string) {
+    return rentedPeriods.split(",").map(range => {
+      const [start, end] = range.split(":");
+      const startDate = new Date(start.trim());
+      const endDate = new Date(end.trim());
+      if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+        throw new Error(`Invalid date range: ${range}`);
+      }
+      return {startDate, endDate};
+    });
+  }
 
-  function cancel() {
+  function handleSubmit(dateRange: DateRangeType) {
     setShow(false);
-    setSelectedDateRange({startDate: null, endDate: null});
+    setSelectedDateRange(dateRange);
+  }
+
+  function renderPricing() {
+    const pricingIntervals = [
+      {label: "Täglich", price: item?.price},
+      {
+        label: "Wöchentlich",
+        price: item && `$${parseInt(item.price.slice(1), 10) * 7} / Woche`,
+      },
+      {
+        label: "Monatlich",
+        price: item && `$${parseInt(item.price.slice(1), 10) * 30} / Monat`,
+      },
+    ];
+
+    return (
+      <View style={styles.pricingContainer}>
+        {pricingIntervals.map((interval, index) => (
+          <View key={index} style={styles.pricingRow}>
+            <AppText>{interval.label}</AppText>
+            <AppText bold style={{color: colors.primary}}>
+              {interval.price}
+            </AppText>
+          </View>
+        ))}
+      </View>
+    );
   }
 
   return (
@@ -90,43 +114,20 @@ const ItemDetailsScreen: React.FC<Props> = ({route}) => {
         Beschreibung: {item?.description || "Keine Beschreibung verfügbar."}
       </AppText>
 
+      {renderPricing()}
+
       <View style={styles.availabilityContainer}>
         <AppButton
           onPress={() => setShow(true)}
           title={isAvailable ? "Verfügbar" : "Nicht verfügbar"}
           color={isAvailable ? colors.secondary : colors.error}
         />
-        <Modal
-          animationType="slide"
-          transparent
-          visible={show}
-          onRequestClose={cancel}>
-          <View style={styles.modalContainer}>
-            <View style={[styles.datePicker]}>
-              <DateTimePicker
-                mode="range"
-                locale="de"
-                minDate={new Date()}
-                startDate={selectedDateRange.startDate}
-                endDate={selectedDateRange.endDate}
-                onChange={onChange}
-              />
 
-              <View style={styles.buttonContainer}>
-                <AppButton
-                  onPress={cancel}
-                  color={colors.error}
-                  title="Abbrechen"
-                />
-                <AppButton
-                  onPress={() => setShow(false)}
-                  color={colors.secondary}
-                  title="Bestätigen"
-                />
-              </View>
-            </View>
-          </View>
-        </Modal>
+        <DatePickerModal
+          show={show}
+          close={() => setShow(false)}
+          submit={handleSubmit}
+        />
       </View>
 
       {user && (
@@ -158,37 +159,21 @@ const styles = StyleSheet.create({
   category: {fontSize: 18, marginBottom: 8},
   price: {fontSize: 20, marginBottom: 16},
   description: {fontSize: 16},
+  pricingContainer: {
+    marginVertical: 16,
+    paddingHorizontal: 16,
+  },
+  pricingRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 8,
+  },
   availabilityContainer: {marginVertical: 32, alignItems: "center", gap: 12},
-  modalContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-  },
-  datePicker: {
-    width: "80%",
-    maxWidth: 360,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 15,
-    borderRadius: 15,
-    shadowRadius: 20,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowOffset: {width: 0, height: 0},
-    backgroundColor: "#fff",
-  },
   userContainer: {
     marginTop: 24,
     padding: 16,
     borderRadius: 8,
     gap: 12,
-  },
-  buttonContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    width: "100%",
-    paddingHorizontal: 12,
   },
   userData: {flexDirection: "row", gap: 16},
   userImage: {width: 60, height: 60, borderRadius: 25},

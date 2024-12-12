@@ -38,6 +38,11 @@ declare global {
     About: undefined;
   };
 
+  type DateRangeType = {
+    startDate: DateType | null;
+    endDate: DateType | null;
+  };
+
   type Item = {
     id: string;
     title: string;
