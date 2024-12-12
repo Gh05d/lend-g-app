@@ -16,6 +16,12 @@ declare global {
     Drawer: undefined;
     HomeScreen: undefined;
     ItemDetails: {id: string; userID: string};
+    Confirmation: {
+      itemID: string;
+      userID: string;
+      totalPrice: number;
+      dateRange: DateRangeType;
+    };
   };
 
   type TabParamList = {
@@ -23,9 +29,9 @@ declare global {
       screen: keyof StackParamList;
       params?: StackParamList[keyof StackParamList];
     };
-    Loans: undefined;
+    ManageItems: undefined;
     Explore: undefined;
-    Chat: undefined;
+    Chat: {userID: string};
     Profile: undefined;
   };
 
@@ -76,4 +82,11 @@ declare global {
     weight: number;
     eyeColor: string;
   };
+
+  interface Request {
+    userID: string;
+    itemID: string;
+    price: string;
+    timeFrame: DateRangeType;
+  }
 }

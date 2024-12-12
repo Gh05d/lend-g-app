@@ -8,9 +8,8 @@ import {createStackNavigator} from "@react-navigation/stack";
 import {SafeAreaProvider} from "react-native-safe-area-context";
 import Icon from "react-native-vector-icons/FontAwesome";
 
-import Header from "./components/Header";
-import HomeScreen from "./screens/tabs/HomeScreen";
-import LoansScreen from "./screens/tabs/LoansScreen";
+import HomeScreen from "./screens/tabs/Home/HomeScreen";
+import ManageItemsScreen from "./screens/tabs/ManageItemsScreen";
 import ExploreScreen from "./screens/tabs/ExploreScreen";
 import ChatScreen from "./screens/tabs/ChatScreen";
 import ProfileScreen from "./screens/tabs/ProfileScreen";
@@ -19,12 +18,43 @@ import SettingsScreen from "./screens/sidebar/SettingsScreen";
 import HelpScreen from "./screens/sidebar/HelpScreen";
 import InviteScreen from "./screens/sidebar/InviteScreen";
 import AboutScreen from "./screens/sidebar/AboutScreen";
-import ItemDetailsScreen from "./screens/tabs/ItemDetailsScreen";
+import ItemDetailsScreen from "./screens/tabs/Home/ItemDetailsScreen";
+import ConfirmationScreen from "./screens/tabs/Home/ConfirmationScreen";
+
+import Header from "./components/Header";
 import {CustomDarkTheme, CustomLightTheme} from "./themes";
 
 const Drawer = createDrawerNavigator<DrawerParamList>();
 const Tab = createBottomTabNavigator<TabParamList>();
 const Stack = createStackNavigator<StackParamList>();
+
+const HomeStack: React.FC = () => {
+  const {colors} = useTheme();
+
+  return (
+    <Stack.Navigator screenOptions={{headerShown: false}}>
+      <Stack.Screen name="HomeScreen" component={HomeScreen} />
+      <Stack.Screen
+        name="ItemDetails"
+        component={ItemDetailsScreen}
+        options={{
+          title: "Artikelbeschreibung",
+          headerShown: true,
+          headerStyle: {backgroundColor: colors.background},
+        }}
+      />
+      <Stack.Screen
+        name="Confirmation"
+        component={ConfirmationScreen}
+        options={{
+          title: "Buchungsbestätigung",
+          headerShown: true,
+          headerStyle: {backgroundColor: colors.background},
+        }}
+      />
+    </Stack.Navigator>
+  );
+};
 
 const drawerScreens: Array<{
   name: keyof DrawerParamList;
@@ -42,6 +72,22 @@ const drawerScreens: Array<{
   {name: "About", component: AboutScreen, title: "About"},
 ];
 
+const tabScreens: Array<{
+  name: keyof TabParamList;
+  component: React.ComponentType<any>;
+  options: {title: string};
+}> = [
+  {name: "Home", component: HomeStack, options: {title: "Home"}},
+  {
+    name: "ManageItems",
+    component: ManageItemsScreen,
+    options: {title: "Leihübersicht"},
+  },
+  {name: "Explore", component: ExploreScreen, options: {title: "Entdecken"}},
+  {name: "Chat", component: ChatScreen, options: {title: "Chat"}},
+  {name: "Profile", component: ProfileScreen, options: {title: "Profil"}},
+];
+
 const renderHeader = (title: string): JSX.Element => <Header title={title} />;
 
 const getTabBarIcon = (
@@ -55,7 +101,7 @@ const getTabBarIcon = (
     case "Home":
       iconName = "home";
       break;
-    case "Loans":
+    case "ManageItems":
       iconName = "money";
       break;
     case "Explore":
@@ -74,48 +120,15 @@ const getTabBarIcon = (
   return <Icon name={iconName} size={size} color={color} />;
 };
 
-const HomeStack: React.FC = () => {
-  const {colors} = useTheme();
-
-  return (
-    <Stack.Navigator screenOptions={{headerShown: false}}>
-      <Stack.Screen name="HomeScreen" component={HomeScreen} />
-      <Stack.Screen
-        name="ItemDetails"
-        component={ItemDetailsScreen}
-        options={{
-          title: "Artikelbeschreibung",
-          headerShown: true,
-          headerStyle: {backgroundColor: colors.background},
-        }}
-      />
-    </Stack.Navigator>
-  );
-};
-
 const BottomTabs: React.FC = () => (
   <Tab.Navigator
     screenOptions={({route}) => ({
-      header: ({options}) => renderHeader(options.title || route.name), // Dynamic Header
+      header: ({options}) => renderHeader(options.title || route.name),
       tabBarIcon: ({color, size}) => getTabBarIcon(route.name, color, size),
     })}>
-    <Tab.Screen name="Home" component={HomeStack} options={{title: "Home"}} />
-    <Tab.Screen
-      name="Loans"
-      component={LoansScreen}
-      options={{title: "Loans"}}
-    />
-    <Tab.Screen
-      name="Explore"
-      component={ExploreScreen}
-      options={{title: "Explore"}}
-    />
-    <Tab.Screen name="Chat" component={ChatScreen} options={{title: "Chat"}} />
-    <Tab.Screen
-      name="Profile"
-      component={ProfileScreen}
-      options={{title: "Profile"}}
-    />
+    {tabScreens.map(screen => (
+      <Tab.Screen key={screen.name} {...screen} />
+    ))}
   </Tab.Navigator>
 );
 
@@ -124,7 +137,7 @@ const DrawerNavigator: React.FC = () => (
     <Drawer.Screen
       name="Tabs"
       component={BottomTabs}
-      options={{headerShown: false}} // No header for Tabs
+      options={{headerShown: false}}
     />
     {drawerScreens.map(({name, component, title}) => (
       <Drawer.Screen

@@ -14,8 +14,8 @@ import type {BottomTabScreenProps} from "@react-navigation/bottom-tabs";
 import type {StackScreenProps} from "@react-navigation/stack";
 import type {DrawerScreenProps} from "@react-navigation/drawer";
 
-import ScreenWrapper from "../../components/ScreenWrapper";
-import AppText from "../../components/AppText";
+import ScreenWrapper from "../../../components/ScreenWrapper";
+import AppText from "../../../components/AppText";
 
 type Props = CompositeScreenProps<
   BottomTabScreenProps<TabParamList, "Home">,

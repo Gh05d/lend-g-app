@@ -3,36 +3,35 @@ import {useTheme} from "@react-navigation/native";
 import {Modal, StyleSheet, View} from "react-native";
 import DateTimePicker from "react-native-ui-datepicker";
 
-import AppButton from "../../components/AppButton";
+import AppButton from "../AppButton";
 import dayjs from "dayjs";
+import {DatePickerRangeProps} from "react-native-ui-datepicker/lib/typescript/src/DateTimePicker";
 
-interface Props {
+interface Props extends Omit<DatePickerRangeProps, "mode"> {
   show: boolean;
   close: () => void;
   submit: (dateRange: {startDate: string; endDate: string}) => void;
 }
 
-const DatePickerModal: React.FC<Props> = props => {
+const DateRangePickerModal: React.FC<Props> = props => {
+  const {show, close, submit, ...datePickerProps} = props;
+
   const [selectedDateRange, setSelectedDateRange] = useState<DateRangeType>({
     startDate: null,
     endDate: null,
   });
 
   const {colors} = useTheme();
-  console.log(
-    dayjs(selectedDateRange.startDate).locale("de").format("DD. MMMM YYYY"),
-  );
 
   return (
     <Modal
       animationType="slide"
       transparent
-      visible={props.show}
-      onRequestClose={props.close}>
+      visible={show}
+      onRequestClose={close}>
       <View style={styles.modalContainer}>
         <View style={[styles.datePicker]}>
           <DateTimePicker
-            mode="range"
             locale="de"
             firstDayOfWeek={1}
             minDate={new Date()}
@@ -40,16 +39,14 @@ const DatePickerModal: React.FC<Props> = props => {
             endDate={selectedDateRange.endDate}
             selectedItemColor={colors.primary}
             onChange={params => setSelectedDateRange(params)}
+            {...datePickerProps}
+            mode="range"
           />
 
           <View style={styles.buttonContainer}>
+            <AppButton onPress={close} color={colors.error} title="Abbrechen" />
             <AppButton
-              onPress={props.close}
-              color={colors.error}
-              title="Abbrechen"
-            />
-            <AppButton
-              onPress={() => props.submit(selectedDateRange)}
+              onPress={() => submit(selectedDateRange)}
               color={colors.secondary}
               title="Bestätigen"
             />
@@ -60,7 +57,7 @@ const DatePickerModal: React.FC<Props> = props => {
   );
 };
 
-export default DatePickerModal;
+export default DateRangePickerModal;
 
 const styles = StyleSheet.create({
   modalContainer: {
