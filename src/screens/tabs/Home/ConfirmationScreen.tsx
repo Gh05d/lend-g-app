@@ -72,11 +72,7 @@ const ConfirmationScreen: React.FC<Props> = ({route, navigation}) => {
           onPress={handleCancel}
           color={colors.error}
         />
-        <AppButton
-          title="Bestätigen"
-          onPress={handleConfirm}
-          color={colors.primary}
-        />
+        <AppButton title="Bestätigen" onPress={handleConfirm} />
       </View>
     </ScreenWrapper>
   );

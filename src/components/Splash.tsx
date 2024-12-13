@@ -26,7 +26,7 @@ const SplashScreen: React.FC<Props> = ({initiated, removeSplashScreen}) => {
     if (state === FADE_IN_IMAGE) {
       Animated.timing(imageOpacity, {
         toValue: 1,
-        duration: ANIMATION_DURATION, // Fade in duration
+        duration: ANIMATION_DURATION,
         useNativeDriver: true,
       }).start(() => setState(WAIT_FOR_APP_TO_BE_READY));
     }
@@ -34,15 +34,14 @@ const SplashScreen: React.FC<Props> = ({initiated, removeSplashScreen}) => {
 
   React.useEffect(() => {
     if (state === WAIT_FOR_APP_TO_BE_READY && initiated) setState(FADE_OUT);
-    else if (state == HIDDEN) removeSplashScreen();
+    else if (state === HIDDEN && initiated) removeSplashScreen();
   }, [initiated, state]);
 
   React.useEffect(() => {
     if (state === FADE_OUT) {
       Animated.timing(containerOpacity, {
-        toValue: 0.1,
-        duration: ANIMATION_DURATION, // Fade out duration
-        delay: ANIMATION_DURATION, // Minimum time the logo will stay visible
+        toValue: 0,
+        duration: ANIMATION_DURATION,
         useNativeDriver: true,
       }).start(() => setState(HIDDEN));
     }
@@ -52,14 +51,12 @@ const SplashScreen: React.FC<Props> = ({initiated, removeSplashScreen}) => {
 
   return (
     <Animated.View
-      collapsable={false}
       style={[styles.container, {opacity: containerOpacity}]}
       id="splash">
       <AnimatedImageBackground
-        testID="splash"
         source={require("../../assets/splash.png")}
         onLoad={() => setState(FADE_IN_IMAGE)}
-        style={[{flex: 1, width: "100%", opacity: imageOpacity}]}
+        style={[styles.image, {opacity: imageOpacity}]}
         resizeMode="cover"
       />
     </Animated.View>
@@ -71,8 +68,8 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    position: "relative",
   },
+  image: {flex: 1, width: "100%"},
 });
 
 export default SplashScreen;

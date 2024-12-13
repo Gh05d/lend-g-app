@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useEffect, useState} from "react";
 import {useColorScheme} from "react-native";
 import SplashScreen from "./components/Splash";
 import {NavigationContainer, useTheme} from "@react-navigation/native";
@@ -7,6 +7,7 @@ import {createBottomTabNavigator} from "@react-navigation/bottom-tabs";
 import {createStackNavigator} from "@react-navigation/stack";
 import {SafeAreaProvider} from "react-native-safe-area-context";
 import Icon from "react-native-vector-icons/FontAwesome";
+import axios from "axios";
 
 import HomeScreen from "./screens/tabs/Home/HomeScreen";
 import ManageItemsScreen from "./screens/tabs/ManageItemsScreen";
@@ -23,6 +24,7 @@ import ConfirmationScreen from "./screens/tabs/Home/ConfirmationScreen";
 
 import Header from "./components/Header";
 import {CustomDarkTheme, CustomLightTheme} from "./themes";
+import {UserContext} from "./common/variables";
 
 const Drawer = createDrawerNavigator<DrawerParamList>();
 const Tab = createBottomTabNavigator<TabParamList>();
@@ -162,21 +164,43 @@ const RootNavigator: React.FC = () => (
 
 const App: React.FC = () => {
   const [initiated, setInitiated] = React.useState(false);
+  const [show, toggle] = React.useState(true);
+
+  const [user, setUser] = useState(null);
+
   const scheme = useColorScheme();
 
-  if (!initiated) {
+  useEffect(() => {
+    (async function fetchUser() {
+      try {
+        const {data} = await axios.get("https://dummyjson.com/users/1");
+        setUser(data);
+      } catch (error) {
+        console.error("Failed to fetch user:", error);
+      } finally {
+        setInitiated(true);
+      }
+    })();
+  }, []);
+
+  if (show) {
     return (
-      <SplashScreen initiated removeSplashScreen={() => setInitiated(true)} />
+      <SplashScreen
+        initiated={initiated}
+        removeSplashScreen={() => toggle(false)}
+      />
     );
   }
 
   return (
-    <SafeAreaProvider>
-      <NavigationContainer
-        theme={scheme === "dark" ? CustomDarkTheme : CustomLightTheme}>
-        <RootNavigator />
-      </NavigationContainer>
-    </SafeAreaProvider>
+    <UserContext.Provider value={user}>
+      <SafeAreaProvider>
+        <NavigationContainer
+          theme={scheme === "dark" ? CustomDarkTheme : CustomLightTheme}>
+          <RootNavigator />
+        </NavigationContainer>
+      </SafeAreaProvider>
+    </UserContext.Provider>
   );
 };
 

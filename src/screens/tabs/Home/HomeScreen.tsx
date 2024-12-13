@@ -64,7 +64,8 @@ const HomeScreen: React.FC<Props> = ({navigation}) => {
         style={[styles.itemContainer, {backgroundColor: colors.card}]}
         onPress={() =>
           navigation.navigate("ItemDetails", {id: item.id, userID: item.userID})
-        }>
+        }
+        accessibilityLabel={`Übersichtskarte von ${item.title}. Navigiert zur Übersichtsseite.`}>
         <AppText style={styles.itemTitle}>{item.title}</AppText>
         <AppText style={[styles.itemPrice, {color: colors.primary}]}>
           {item.price}

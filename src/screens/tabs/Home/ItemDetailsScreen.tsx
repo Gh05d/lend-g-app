@@ -1,154 +1,257 @@
 import React, {useEffect, useState} from "react";
-import {SectionList, StyleSheet, View} from "react-native";
-import {useTheme} from "@react-navigation/native";
-import {BottomTabScreenProps} from "@react-navigation/bottom-tabs";
+import {StyleSheet, Alert, View, Image} from "react-native";
+import {CompositeScreenProps, useTheme} from "@react-navigation/native";
 import axios from "axios";
+import type {StackScreenProps} from "@react-navigation/stack";
+import type {BottomTabScreenProps} from "@react-navigation/bottom-tabs";
+import {DateType} from "react-native-ui-datepicker";
+import dayjs from "dayjs";
+import isBetween from "dayjs/plugin/isBetween";
+dayjs.extend(isBetween);
 
-import AppText from "../../components/AppText";
-import AppButton from "../../components/AppButton";
-import ScreenWrapper from "../../components/ScreenWrapper";
+import ScreenWrapper from "../../../components/ScreenWrapper";
+import AppText from "../../../components/AppText";
+import AppButton from "../../../components/AppButton";
+import DateRangePickerModal from "../../../components/modals/DateRangePickerModal";
 
-type Props = BottomTabScreenProps<TabParamList, "ManageItems">;
+type Props = CompositeScreenProps<
+  StackScreenProps<StackParamList, "ItemDetails">,
+  BottomTabScreenProps<TabParamList, "Chat">
+>;
 
-const userID = "1"; // Replace with actual user ID from context or props
+const ItemDetailsScreen: React.FC<Props> = ({route, navigation}) => {
+  const {id, userID} = route.params;
 
-const ManageItemsScreen: React.FC<Props> = ({navigation}) => {
-  const [pendingRequests, setPendingRequests] = useState<Request[]>([]);
-  const [itemsLent, setItemsLent] = useState<Item[]>([]);
-  const [itemsBorrowed, setItemsBorrowed] = useState<Item[]>([]);
-  const [rentalHistory, setRentalHistory] = useState<Item[]>([]);
-  const [userNames, setUserNames] = useState<{[key: string]: string}>({});
+  const [item, setItem] = useState<Item | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [show, setShow] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+  const [error, setError] = useState<null | Error>(null);
+
   const {colors} = useTheme();
 
   useEffect(() => {
-    (async function fetchData() {
+    (async function fetchDetails() {
       try {
-        const itemsResponse = await axios.get<Item[]>(
-          "http://my-json-server.typicode.com/Gh05d/lend-g-app/items",
-        );
-
-        const requestsResponse = await axios.get<Request[]>(
-          "http://mock-api.com/requests",
-        );
-
-        const userRequests = await Promise.all(
-          requestsResponse.data.map(request =>
-            axios.get<User>(`https://dummyjson.com/users/${request.userID}`),
+        const [itemResponse, userResponse] = await Promise.all([
+          axios.get<Item>(
+            `http://my-json-server.typicode.com/Gh05d/lend-g-app/items/${id}`,
           ),
-        );
+          axios.get<User>(`https://dummyjson.com/users/${userID}`),
+        ]);
 
-        const usersMap = userRequests.reduce((map, response) => {
-          const user = response.data;
-          map[user.id] = user.name;
-          return map;
-        }, {} as {[key: string]: string});
-
-        setUserNames(usersMap);
-
-        setItemsLent(
-          itemsResponse.data.filter(
-            item => item.userID === userID && item.currentlyRented,
-          ),
-        );
-
-        setPendingRequests(
-          requestsResponse.data.filter(request => request.userID === userID),
-        );
-
-        setItemsBorrowed(
-          itemsResponse.data.filter(item => item.borrowedBy === userID),
-        );
-
-        setRentalHistory(
-          itemsResponse.data.filter(
-            item =>
-              (item.userID === userID || item.borrowedBy === userID) &&
-              item.isHistory,
-          ),
-        );
+        setItem(itemResponse.data);
+        setUser(userResponse.data);
       } catch (err) {
         setError(err as Error);
       } finally {
         setLoading(false);
       }
     })();
-  }, []);
+  }, [id, userID]);
 
-  const handleViewRequests = (itemID: string) => {
-    navigation.navigate("Requests", {itemID});
-  };
+  const isAvailable = item?.rentedPeriods
+    ? !parseRentedPeriods(item.rentedPeriods).some(
+        period =>
+          new Date() &&
+          dayjs(new Date()).isBetween(
+            period.startDate,
+            period.endDate,
+            null,
+            "[]",
+          ),
+      )
+    : true;
 
-  const renderItem = ({item}: {item: Item}) => (
-    <View style={[styles.itemContainer, {backgroundColor: colors.card}]}>
-      <AppText bold>{item.title}</AppText>
-      <AppText>Preis: {item.price} €</AppText>
-      {item.rentedPeriods && <AppText>Verliehen: {item.rentedPeriods}</AppText>}
-      <AppButton
-        title="Anfragen anzeigen"
-        onPress={() => handleViewRequests(item.id)}
-        color={colors.primary}
-      />
-    </View>
-  );
+  function parseRentedPeriods(rentedPeriods: string) {
+    return rentedPeriods.split(",").map(range => {
+      const [start, end] = range.split(":");
+      const startDate = dayjs(start.trim());
+      const endDate = dayjs(end.trim());
 
-  const sections = [
-    {
-      title: "Offene Anfragen",
-      data: pendingRequests.map(request => ({
-        id: request.itemID,
-        title:
-          `Nutzer ${userNames[request.userID]} fragt Miete an.` ||
-          "Unbekannter Benutzer",
-        price: request.price,
-        rentedPeriods: `${request.timeFrame.startDate} - ${request.timeFrame.endDate}`,
-      })),
-      renderItem,
-      emptyText: "Keine offenen Anfragen",
-    },
-    {
-      title: "Verliehene Artikel",
-      data: itemsLent,
-      renderItem,
-      emptyText: "Keine verliehenen Artikel",
-    },
-    {
-      title: "Geliehene Artikel",
-      data: itemsBorrowed,
-      renderItem,
-      emptyText: "Keine geliehenen Artikel",
-    },
-    {
-      title: "Vergangene Transaktionen",
-      data: rentalHistory,
-      renderItem,
-      emptyText: "Keine vergangenen Transaktionen",
-    },
-  ];
+      if (!startDate.isValid() || !endDate.isValid()) {
+        throw new Error(`Invalid date range: ${range}`);
+      }
+
+      return {startDate, endDate};
+    });
+  }
+
+  function handleSubmit(dateRange: DateRangeType) {
+    const isConflict = item?.rentedPeriods
+      ? parseRentedPeriods(item.rentedPeriods).some(
+          period =>
+            dayjs(dateRange.startDate).isBetween(
+              period.startDate,
+              period.endDate,
+              null,
+              "[]",
+            ) ||
+            dayjs(dateRange.endDate).isBetween(
+              period.startDate,
+              period.endDate,
+              null,
+              "[]",
+            ) ||
+            dayjs(period.startDate).isBetween(
+              dateRange.startDate,
+              dateRange.endDate,
+              null,
+              "[]",
+            ) ||
+            dayjs(period.endDate).isBetween(
+              dateRange.startDate,
+              dateRange.endDate,
+              null,
+              "[]",
+            ),
+        )
+      : false;
+
+    if (isConflict) {
+      return Alert.alert(
+        "Eingeschränkte Verfügbarkeit",
+        "Das Objekt ist für den gewählten Zeitraum nicht durchgehend verfügbar. Bitte wähle einen anderen Zeitrahmen.",
+      );
+    }
+
+    const duration = dayjs(dateRange.endDate).diff(
+      dayjs(dateRange.startDate),
+      "day",
+    );
+
+    navigation.navigate("Confirmation", {
+      itemID: item!.id,
+      userID: user!.id,
+      totalPrice: duration * parseInt(item!.price.slice(1), 10),
+      dateRange,
+    });
+
+    setShow(false);
+  }
+
+  function renderPricing() {
+    const pricingIntervals = [
+      {label: "Täglich", price: item?.price},
+      {
+        label: "Wöchentlich",
+        price:
+          item && `$${parseInt(item.price.slice(1), 10) * 7 * 0.9} / Woche`,
+      },
+      {
+        label: "Monatlich",
+        price:
+          item && `$${parseInt(item.price.slice(1), 10) * 30 * 0.7} / Monat`,
+      },
+    ];
+
+    return (
+      <View style={styles.pricingContainer}>
+        {pricingIntervals.map((interval, index) => (
+          <View key={index} style={styles.pricingRow}>
+            <AppText>{interval.label}</AppText>
+            <AppText bold style={{color: colors.primary}}>
+              {interval.price}
+            </AppText>
+          </View>
+        ))}
+      </View>
+    );
+  }
+
+  function isDateDisabled(date: DateType) {
+    if (!item?.rentedPeriods) return false;
+
+    return parseRentedPeriods(item.rentedPeriods).some(period =>
+      dayjs(date).isBetween(period.startDate, period.endDate, null, "[]"),
+    );
+  }
+
+  function navigateToChat() {
+    if (user) navigation.navigate("Chat", {userID: user.id});
+  }
 
   return (
     <ScreenWrapper loading={loading} error={error}>
       <AppText bold style={styles.title}>
-        Meine Artikel
+        {item?.title}
+      </AppText>
+      <AppText style={styles.category}>
+        Kategorie: {item?.category || "Nicht verfügbar"}
+      </AppText>
+      <AppText bold style={[styles.price, {color: colors.primary}]}>
+        Preis: {item?.price}
+      </AppText>
+      <AppText style={styles.description}>
+        Beschreibung: {item?.description || "Keine Beschreibung verfügbar."}
       </AppText>
 
-      <SectionList
-        sections={sections}
-        keyExtractor={(item, index) => `${item.id}-${index}`}
-        renderItem={({item, section}) => section.renderItem({item})}
-        renderSectionHeader={({section}) => (
-          <AppText style={styles.sectionTitle}>{section.title}</AppText>
-        )}
-      />
+      {renderPricing()}
+
+      <View style={styles.availabilityContainer}>
+        <AppButton
+          onPress={() => setShow(true)}
+          title={isAvailable ? "Datum auswählen" : "Nicht verfügbar"}
+          color={isAvailable ? colors.secondary : colors.error}
+        />
+
+        <DateRangePickerModal
+          show={show}
+          close={() => setShow(false)}
+          submit={handleSubmit}
+          disabledDates={isDateDisabled}
+        />
+      </View>
+
+      {user && (
+        <View style={[styles.userContainer, {backgroundColor: colors.card}]}>
+          <AppText bold style={styles.userTitle}>
+            Eigentümer Informationen
+          </AppText>
+
+          <View style={styles.userData}>
+            <Image source={{uri: user.image}} style={styles.userImage} />
+            <View style={styles.userInfo}>
+              <AppText>
+                Name: {user.firstName} {user.lastName}
+              </AppText>
+              <AppText>Email: {user.email}</AppText>
+              <AppText>Telefon: {user.phone}</AppText>
+            </View>
+          </View>
+
+          <AppButton onPress={navigateToChat} title="Chat mit Eigentümer" />
+        </View>
+      )}
     </ScreenWrapper>
   );
 };
 
-const styles = StyleSheet.create({
-  title: {fontSize: 24, textAlign: "center", marginBottom: 16},
-  sectionTitle: {fontSize: 20, marginVertical: 12},
-  itemContainer: {padding: 16, marginVertical: 8, borderRadius: 8},
-});
+export default ItemDetailsScreen;
 
-export default ManageItemsScreen;
+const styles = StyleSheet.create({
+  title: {fontSize: 24, marginBottom: 8},
+  category: {fontSize: 18, marginBottom: 8},
+  price: {fontSize: 20, marginBottom: 16},
+  description: {fontSize: 16},
+  pricingContainer: {
+    marginVertical: 16,
+    paddingHorizontal: 16,
+  },
+  pricingRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 8,
+  },
+  availabilityContainer: {marginVertical: 32, alignItems: "center", gap: 12},
+  userContainer: {
+    marginTop: 24,
+    padding: 16,
+    borderRadius: 8,
+    gap: 12,
+  },
+  userData: {flexDirection: "row", gap: 16},
+  userImage: {width: 60, height: 60, borderRadius: 25},
+  userInfo: {flex: 1},
+  userTitle: {fontSize: 20},
+});

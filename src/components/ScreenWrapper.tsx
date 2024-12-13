@@ -23,7 +23,7 @@ const ScreenWrapper: React.FC<ScreenWrapperProps> = ({
   const {colors} = useTheme();
 
   function renderView() {
-    if (loading) return <Loading text="Lade Angebote" />;
+    if (loading) return <Loading text="Lade" />;
     if (error) return <Error error={error} />;
     return children;
   }
