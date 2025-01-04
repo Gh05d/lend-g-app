@@ -56,7 +56,7 @@ const ManageItemsScreen: React.FC<Props> = ({navigation}) => {
       );
 
       setPendingRequests(
-        requestsResponse.data.filter(request => request.userID === userID),
+        requestsResponse.data.filter(request => request.userID != userID),
       );
 
       setItemsBorrowed(
@@ -87,10 +87,6 @@ const ManageItemsScreen: React.FC<Props> = ({navigation}) => {
     setRefreshing(false);
   };
 
-  const handleViewRequests = (itemID: string) => {
-    navigation.navigate("Requests", {itemID});
-  };
-
   const renderItem = useCallback(
     ({item}: {item: Item}) => (
       <View style={[styles.itemContainer, {backgroundColor: colors.card}]}>
@@ -101,8 +97,8 @@ const ManageItemsScreen: React.FC<Props> = ({navigation}) => {
         )}
         <AppButton
           style={{marginTop: 12}}
-          title="Anfragen anzeigen"
-          onPress={() => handleViewRequests(item.id)}
+          title="Anfrage anzeigen"
+          onPress={() => navigation.navigate("Requests", {itemID})}
         />
       </View>
     ),
