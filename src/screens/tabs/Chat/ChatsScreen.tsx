@@ -1,74 +1,24 @@
 import React, {useState, useEffect, useCallback} from "react";
 import {FlatList, Pressable, StyleSheet, View, Image} from "react-native";
-import {useTheme} from "@react-navigation/native";
+import {CompositeScreenProps, useTheme} from "@react-navigation/native";
 import axios from "axios";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 require("dayjs/locale/de");
 dayjs.extend(relativeTime);
 
-import ScreenWrapper from "../../components/ScreenWrapper";
-import AppText from "../../components/AppText";
+import ScreenWrapper from "../../../components/ScreenWrapper";
+import AppText from "../../../components/AppText";
 import {BottomTabScreenProps} from "@react-navigation/bottom-tabs";
+import {StackScreenProps} from "@react-navigation/stack";
+import {mockChats} from "../../../common/mockData";
 
-interface Chat {
-  id: string;
-  ownerID: string;
-  userID: string;
-  messages: {message: string; timestamp: Date; read?: Date | null}[];
-}
+type Props = CompositeScreenProps<
+  BottomTabScreenProps<TabParamList, "ChatsStack">,
+  StackScreenProps<ChatStackParamList>
+>;
 
-const mockChats: Chat[] = [
-  {
-    id: "1",
-    ownerID: "1",
-    userID: "2",
-    messages: [
-      {
-        message: "Hi Bob!",
-        timestamp: new Date("2024-12-10T10:00:00Z"),
-        read: new Date("2024-12-10T10:06:00Z"),
-      },
-      {
-        message: "Hey Alice!",
-        timestamp: new Date("2024-12-10T10:05:00Z"),
-        read: new Date("2024-12-10T10:06:00Z"),
-      },
-    ],
-  },
-  {
-    id: "2",
-    ownerID: "1",
-    userID: "4",
-    messages: [
-      {
-        message: "Is the item still available?",
-        timestamp: new Date("2024-12-11T12:00:00Z"),
-        read: new Date("2024-12-11T12:05:00Z"),
-      },
-      {message: "Yes, it is.", timestamp: new Date("2024-12-11T12:15:00Z")},
-    ],
-  },
-  {
-    id: "3",
-    ownerID: "1",
-    userID: "6",
-    messages: [
-      {
-        message: "When can I pick it up?",
-        timestamp: new Date("2024-12-12T08:00:00Z"),
-      },
-      {
-        message: "Anytime today after 2 PM.",
-        timestamp: new Date("2024-12-12T08:30:00Z"),
-      },
-    ],
-  },
-];
-
-type Props = BottomTabScreenProps<TabParamList, "Chat">;
-
-const ChatScreen: React.FC<Props> = () => {
+const ChatsScreen: React.FC<Props> = ({navigation}) => {
   const {colors} = useTheme();
   const [chats, setChats] = useState<Chat[]>();
   const [users, setUsers] = useState<Record<string, User>>({});
@@ -111,9 +61,11 @@ const ChatScreen: React.FC<Props> = () => {
         <Pressable
           style={[styles.card, {backgroundColor: colors.card}]}
           onPress={() => {
-            console.log(
-              `Chat with ${users[item.userID]?.username || "unknown"} opened.`,
-            );
+            navigation.navigate("Chat", {
+              chatID: item.id,
+              userName: users[item.userID]?.username,
+              profilePicture: users[item.userID].image,
+            });
           }}>
           <View style={styles.row}>
             <Image
@@ -189,4 +141,4 @@ const styles = StyleSheet.create({
   timeText: {marginLeft: 8, fontSize: 12, alignSelf: "flex-start"},
 });
 
-export default ChatScreen;
+export default ChatsScreen;

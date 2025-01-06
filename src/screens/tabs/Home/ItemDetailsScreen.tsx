@@ -131,23 +131,17 @@ const ItemDetailsScreen: React.FC<Props> = ({route, navigation}) => {
   }
 
   function renderPricing() {
+    const purePrice = parseInt(item?.price.replace(" € / Tag", ""), 10);
+
     const pricingIntervals = [
       {label: "Täglich", price: item?.price},
       {
         label: "Wöchentlich",
-        price:
-          item &&
-          `${(parseInt(item.price.slice(2), 10) * 7 * 0.9).toFixed(
-            2,
-          )} € / Woche`,
+        price: item && `${(purePrice * 7 * 0.9).toFixed(2)} € / Woche`,
       },
       {
         label: "Monatlich",
-        price:
-          item &&
-          `${(parseInt(item.price.slice(1), 10) * 30 * 0.7).toFixed(
-            2,
-          )} € / Monat`,
+        price: item && `${(purePrice * 30 * 0.7).toFixed(2)} € / Monat`,
       },
     ];
 
@@ -214,7 +208,7 @@ const ItemDetailsScreen: React.FC<Props> = ({route, navigation}) => {
 
       {user && (
         <View style={[styles.userContainer, {backgroundColor: colors.card}]}>
-          <AppText bold style={styles.userTitle}>
+          <AppText bold textSize="heading">
             Eigentümer Informationen
           </AppText>
 
@@ -259,6 +253,5 @@ const styles = StyleSheet.create({
   },
   userData: {flexDirection: "row", gap: 16},
   userImage: {width: 60, height: 60, borderRadius: 25},
-  userInfo: {flex: 1},
-  userTitle: {fontSize: 20},
+  userInfo: {flex: 1, gap: 8},
 });

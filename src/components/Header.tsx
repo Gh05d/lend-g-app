@@ -1,5 +1,5 @@
 import React from "react";
-import {View, Text, Pressable, StyleSheet} from "react-native";
+import {View, Pressable, StyleSheet} from "react-native";
 import {
   useNavigation,
   DrawerActions,
@@ -9,9 +9,7 @@ import {
 import Icon from "react-native-vector-icons/FontAwesome";
 import AppText from "./AppText";
 
-type RootParamList = {
-  Notifications: undefined;
-};
+type RootParamList = {Notifications: undefined};
 
 const Header: React.FC<{title: string}> = ({title}) => {
   const navigation = useNavigation<NavigationProp<RootParamList>>();

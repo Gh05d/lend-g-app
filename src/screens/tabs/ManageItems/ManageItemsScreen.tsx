@@ -1,6 +1,6 @@
 import React, {useCallback, useContext, useEffect, useState} from "react";
 import {SectionList, StyleSheet, View, RefreshControl} from "react-native";
-import {useTheme} from "@react-navigation/native";
+import {CompositeScreenProps, useTheme} from "@react-navigation/native";
 import {BottomTabScreenProps} from "@react-navigation/bottom-tabs";
 import axios from "axios";
 
@@ -8,8 +8,12 @@ import AppText from "../../../components/AppText";
 import AppButton from "../../../components/AppButton";
 import ScreenWrapper from "../../../components/ScreenWrapper";
 import {UserContext} from "../../../common/variables";
+import {StackScreenProps} from "@react-navigation/stack";
 
-type Props = BottomTabScreenProps<TabParamList, "ManageItems">;
+type Props = CompositeScreenProps<
+  BottomTabScreenProps<TabParamList, "ManageItemsStack">,
+  StackScreenProps<ManageItemsStackParamList>
+>;
 
 const ManageItemsScreen: React.FC<Props> = ({navigation}) => {
   const [pendingRequests, setPendingRequests] = useState<Request[]>([]);
@@ -93,7 +97,7 @@ const ManageItemsScreen: React.FC<Props> = ({navigation}) => {
         <AppText textSize="large" bold>
           {item.title}
         </AppText>
-        <AppText>Preis: {item.price} €</AppText>
+        <AppText>Preis: {item.price}</AppText>
         {item.rentedPeriods && (
           <AppText>Verliehen: {item.rentedPeriods}</AppText>
         )}

@@ -18,7 +18,7 @@ import ScreenWrapper from "../../../components/ScreenWrapper";
 import AppText from "../../../components/AppText";
 
 type Props = CompositeScreenProps<
-  BottomTabScreenProps<TabParamList, "Home">,
+  BottomTabScreenProps<TabParamList, "HomeStack">,
   CompositeScreenProps<
     StackScreenProps<HomeStackParamList>,
     DrawerScreenProps<DrawerParamList>

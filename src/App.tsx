@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from "react";
-import {useColorScheme} from "react-native";
+import {Image, useColorScheme} from "react-native";
 import SplashScreen from "./components/Splash";
 import {NavigationContainer, useTheme} from "@react-navigation/native";
 import {createDrawerNavigator} from "@react-navigation/drawer";
@@ -12,7 +12,7 @@ import axios from "axios";
 import HomeScreen from "./screens/tabs/Home/HomeScreen";
 import ManageItemsScreen from "./screens/tabs/ManageItems/ManageItemsScreen";
 import ExploreScreen from "./screens/tabs/ExploreScreen";
-import ChatScreen from "./screens/tabs/ChatScreen";
+import ChatScreen from "./screens/tabs/Chat/ChatsScreen";
 import ProfileScreen from "./screens/tabs/ProfileScreen";
 import NotificationsScreen from "./screens/sidebar/NotificationsScreen";
 import SettingsScreen from "./screens/sidebar/SettingsScreen";
@@ -26,11 +26,13 @@ import RequestsScreen from "./screens/tabs/ManageItems/RequestScreen";
 import Header from "./components/Header";
 import {CustomDarkTheme, CustomLightTheme} from "./themes";
 import {UserContext} from "./common/variables";
+import ChatsScreen from "./screens/tabs/Chat/ChatScreen";
 
 const Drawer = createDrawerNavigator<DrawerParamList>();
 const Tab = createBottomTabNavigator<TabParamList>();
 const HomeStack = createStackNavigator<HomeStackParamList>();
-const ManageItemsStack = createStackNavigator<HomeStackParamList>();
+const ManageItemsStack = createStackNavigator<ManageItemsStackParamList>();
+const ChatStack = createStackNavigator<ChatStackParamList>();
 
 const HomeStackNavigator: React.FC = () => {
   const {colors} = useTheme();
@@ -66,7 +68,7 @@ const ManageItemsStackNavigator: React.FC = () => {
   return (
     <ManageItemsStack.Navigator screenOptions={{headerShown: true}}>
       <ManageItemsStack.Screen
-        name="ManageItemsScreen"
+        name="ManageItems"
         component={ManageItemsScreen}
         options={{headerShown: false}}
       />
@@ -79,6 +81,34 @@ const ManageItemsStackNavigator: React.FC = () => {
         }}
       />
     </ManageItemsStack.Navigator>
+  );
+};
+
+const ChatStackNavigator: React.FC = () => {
+  const {colors} = useTheme();
+
+  return (
+    <ChatStack.Navigator screenOptions={{headerShown: true}}>
+      <ChatStack.Screen
+        name="Chats"
+        component={ChatScreen}
+        options={{headerShown: false}}
+      />
+      <ChatStack.Screen
+        name="Chat"
+        component={ChatsScreen}
+        options={({route}) => ({
+          title: `Chat mit ${route.params?.userName || "Nutzer"}`,
+          headerStyle: {backgroundColor: colors.background},
+          headerRight: () => (
+            <Image
+              source={{uri: route.params?.profilePicture}}
+              style={{width: 40, height: 40, borderRadius: 20, marginRight: 10}}
+            />
+          ),
+        })}
+      />
+    </ChatStack.Navigator>
   );
 };
 
@@ -103,14 +133,18 @@ const tabScreens: Array<{
   component: React.ComponentType<any>;
   options: {title: string};
 }> = [
-  {name: "Home", component: HomeStackNavigator, options: {title: "Home"}},
+  {name: "HomeStack", component: HomeStackNavigator, options: {title: "Home"}},
   {
-    name: "ManageItems",
+    name: "ManageItemsStack",
     component: ManageItemsStackNavigator,
     options: {title: "Leihübersicht"},
   },
   {name: "Explore", component: ExploreScreen, options: {title: "Entdecken"}},
-  {name: "Chat", component: ChatScreen, options: {title: "Chat"}},
+  {
+    name: "ChatsStack",
+    component: ChatStackNavigator,
+    options: {title: "Chats"},
+  },
   {name: "Profile", component: ProfileScreen, options: {title: "Profil"}},
 ];
 
@@ -124,16 +158,16 @@ const getTabBarIcon = (
   let iconName;
 
   switch (routeName) {
-    case "Home":
+    case "HomeStack":
       iconName = "home";
       break;
-    case "ManageItems":
+    case "ManageItemsStack":
       iconName = "money";
       break;
     case "Explore":
       iconName = "search";
       break;
-    case "Chat":
+    case "ChatsStack":
       iconName = "comments";
       break;
     case "Profile":

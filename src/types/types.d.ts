@@ -29,17 +29,25 @@ declare global {
     Requests: {itemID: string};
   };
 
+  type ChatStackParamList = {
+    Chats: undefined;
+    Chat: {chatID: string; userName: string; profilePicture?: string};
+  };
+
   type TabParamList = {
-    Home: {
+    HomeStack: {
       screen: keyof HomeStackParamList;
       params?: HomeStackParamList[keyof HomeStackParamList];
     };
-    ManageItems: {
+    ManageItemsStack: {
       screen: keyof ManageItemsStackParamList;
       params?: ManageItemsStackParamList[keyof ManageItemsStackParamList];
     };
     Explore: undefined;
-    Chat: {userID: string};
+    ChatsStack: {
+      screen: keyof ChatStackParamList;
+      params?: ChatStackParamList[keyof ChatStackParamList];
+    };
     Profile: undefined;
   };
 
@@ -96,5 +104,19 @@ declare global {
     itemID: string;
     price: string;
     timeFrame: DateRangeType;
+  }
+
+  interface Message {
+    message: string;
+    timestamp: Date;
+    read?: Date | null;
+    ownerID: string;
+  }
+
+  interface Chat {
+    id: string;
+    ownerID: string;
+    userID: string;
+    messages: Message[];
   }
 }

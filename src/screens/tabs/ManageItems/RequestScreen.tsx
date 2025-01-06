@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from "react";
-import {StyleSheet, View, TextInput} from "react-native";
+import {StyleSheet, View, TextInput, Alert} from "react-native";
 import {StackScreenProps} from "@react-navigation/stack";
 import axios from "axios";
 import dayjs from "dayjs";
@@ -92,8 +92,12 @@ const RequestScreen: React.FC<Props> = ({route, navigation}) => {
 
   const price = request ? calculatePrice(request.price, days) : "0.00";
 
-  const handleApprove = (requestID: string) => {
-    console.log(`Approved request: ${requestID}`);
+  const handleApprove = async (requestID: string) => {
+    Alert.alert(
+      "Anfrage genehmigt",
+      `Nutzer ${user?.username} bekommt eine Bestätigung. Bitte bereite die Übergabe vor.`,
+      [{onPress: () => navigation.goBack()}],
+    );
   };
 
   const handleReject = (requestID: string) => {
@@ -141,7 +145,7 @@ const RequestScreen: React.FC<Props> = ({route, navigation}) => {
                 if (isNaN(numericValue) || numericValue < 0) {
                   setDeposit("0.00");
                 }
-                setTotalPrice(state => state + numericValue);
+                setTotalPrice(+price + numericValue);
               }}
               keyboardType="numeric"
               placeholder="Kaution eingeben"
