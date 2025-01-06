@@ -20,7 +20,7 @@ import AppText from "../../../components/AppText";
 type Props = CompositeScreenProps<
   BottomTabScreenProps<TabParamList, "Home">,
   CompositeScreenProps<
-    StackScreenProps<StackParamList>,
+    StackScreenProps<HomeStackParamList>,
     DrawerScreenProps<DrawerParamList>
   >
 >;
@@ -66,10 +66,8 @@ const HomeScreen: React.FC<Props> = ({navigation}) => {
           navigation.navigate("ItemDetails", {id: item.id, userID: item.userID})
         }
         accessibilityLabel={`Übersichtskarte von ${item.title}. Navigiert zur Übersichtsseite.`}>
-        <AppText style={styles.itemTitle}>{item.title}</AppText>
-        <AppText style={[styles.itemPrice, {color: colors.primary}]}>
-          {item.price}
-        </AppText>
+        <AppText textSize="large">{item.title}</AppText>
+        <AppText style={[{color: colors.primary}]}>{item.price}</AppText>
       </Pressable>
     ),
     [colors.card, navigation, colors.primary],
@@ -129,6 +127,4 @@ const styles = StyleSheet.create({
     elevation: 2,
     gap: 12,
   },
-  itemTitle: {fontSize: 18},
-  itemPrice: {fontSize: 16},
 });

@@ -10,7 +10,7 @@ import Icon from "react-native-vector-icons/FontAwesome";
 import axios from "axios";
 
 import HomeScreen from "./screens/tabs/Home/HomeScreen";
-import ManageItemsScreen from "./screens/tabs/ManageItemsScreen";
+import ManageItemsScreen from "./screens/tabs/ManageItems/ManageItemsScreen";
 import ExploreScreen from "./screens/tabs/ExploreScreen";
 import ChatScreen from "./screens/tabs/ChatScreen";
 import ProfileScreen from "./screens/tabs/ProfileScreen";
@@ -21,6 +21,7 @@ import InviteScreen from "./screens/sidebar/InviteScreen";
 import AboutScreen from "./screens/sidebar/AboutScreen";
 import ItemDetailsScreen from "./screens/tabs/Home/ItemDetailsScreen";
 import ConfirmationScreen from "./screens/tabs/Home/ConfirmationScreen";
+import RequestsScreen from "./screens/tabs/ManageItems/RequestScreen";
 
 import Header from "./components/Header";
 import {CustomDarkTheme, CustomLightTheme} from "./themes";
@@ -28,15 +29,16 @@ import {UserContext} from "./common/variables";
 
 const Drawer = createDrawerNavigator<DrawerParamList>();
 const Tab = createBottomTabNavigator<TabParamList>();
-const Stack = createStackNavigator<StackParamList>();
+const HomeStack = createStackNavigator<HomeStackParamList>();
+const ManageItemsStack = createStackNavigator<HomeStackParamList>();
 
-const HomeStack: React.FC = () => {
+const HomeStackNavigator: React.FC = () => {
   const {colors} = useTheme();
 
   return (
-    <Stack.Navigator screenOptions={{headerShown: false}}>
-      <Stack.Screen name="HomeScreen" component={HomeScreen} />
-      <Stack.Screen
+    <HomeStack.Navigator screenOptions={{headerShown: false}}>
+      <HomeStack.Screen name="HomeScreen" component={HomeScreen} />
+      <HomeStack.Screen
         name="ItemDetails"
         component={ItemDetailsScreen}
         options={{
@@ -45,7 +47,7 @@ const HomeStack: React.FC = () => {
           headerStyle: {backgroundColor: colors.background},
         }}
       />
-      <Stack.Screen
+      <HomeStack.Screen
         name="Confirmation"
         component={ConfirmationScreen}
         options={{
@@ -54,7 +56,29 @@ const HomeStack: React.FC = () => {
           headerStyle: {backgroundColor: colors.background},
         }}
       />
-    </Stack.Navigator>
+    </HomeStack.Navigator>
+  );
+};
+
+const ManageItemsStackNavigator: React.FC = () => {
+  const {colors} = useTheme();
+
+  return (
+    <ManageItemsStack.Navigator screenOptions={{headerShown: true}}>
+      <ManageItemsStack.Screen
+        name="ManageItemsScreen"
+        component={ManageItemsScreen}
+        options={{headerShown: false}}
+      />
+      <ManageItemsStack.Screen
+        name="Requests"
+        component={RequestsScreen}
+        options={{
+          title: "Anfragen",
+          headerStyle: {backgroundColor: colors.background},
+        }}
+      />
+    </ManageItemsStack.Navigator>
   );
 };
 
@@ -79,10 +103,10 @@ const tabScreens: Array<{
   component: React.ComponentType<any>;
   options: {title: string};
 }> = [
-  {name: "Home", component: HomeStack, options: {title: "Home"}},
+  {name: "Home", component: HomeStackNavigator, options: {title: "Home"}},
   {
     name: "ManageItems",
-    component: ManageItemsScreen,
+    component: ManageItemsStackNavigator,
     options: {title: "Leihübersicht"},
   },
   {name: "Explore", component: ExploreScreen, options: {title: "Entdecken"}},
@@ -153,13 +177,13 @@ const DrawerNavigator: React.FC = () => (
 );
 
 const RootNavigator: React.FC = () => (
-  <Stack.Navigator>
-    <Stack.Screen
+  <HomeStack.Navigator>
+    <HomeStack.Screen
       name="Drawer"
       component={DrawerNavigator}
       options={{headerShown: false}}
     />
-  </Stack.Navigator>
+  </HomeStack.Navigator>
 );
 
 const App: React.FC = () => {

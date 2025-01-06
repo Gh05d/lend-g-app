@@ -7,10 +7,11 @@ import AppText from "./AppText";
 interface Props extends PressableProps {
   title: string;
   color?: string;
+  outline?: boolean;
 }
 
 const AppButton: React.FC<Props> = props => {
-  const {title, color, style, disabled, ...buttonProps} = props;
+  const {title, color, style, outline, disabled, ...buttonProps} = props;
   const {colors} = useTheme();
 
   return (
@@ -18,7 +19,13 @@ const AppButton: React.FC<Props> = props => {
       style={({pressed}) => {
         const baseStyle: ViewStyle = {
           ...styles.button,
-          backgroundColor: disabled ? "#B0B0B0" : color || colors.primary,
+          borderWidth: outline ? 1 : 0,
+          borderColor: colors.text,
+          backgroundColor: disabled
+            ? "#B0B0B0"
+            : outline
+            ? "transparent"
+            : color || colors.primary,
         };
 
         if (pressed && !disabled) return [baseStyle, style, styles.pressed];
@@ -28,7 +35,12 @@ const AppButton: React.FC<Props> = props => {
       }}
       disabled={disabled}
       {...buttonProps}>
-      <AppText bold style={[styles.text, {color: disabled ? "#555" : "#FFF"}]}>
+      <AppText
+        bold
+        style={[
+          styles.text,
+          {color: disabled ? "#555" : outline ? colors.text : "#FFF"},
+        ]}>
         {title}
       </AppText>
     </Pressable>
@@ -37,7 +49,7 @@ const AppButton: React.FC<Props> = props => {
 
 const styles = StyleSheet.create({
   button: {
-    paddingVertical: 12,
+    paddingVertical: 16,
     paddingHorizontal: 20,
     borderRadius: 8,
     alignItems: "center",
@@ -45,7 +57,7 @@ const styles = StyleSheet.create({
   },
   disabled: {opacity: 0.6},
   pressed: {opacity: 0.8},
-  text: {fontSize: 16},
+  text: {textTransform: "uppercase"},
 });
 
 export default AppButton;

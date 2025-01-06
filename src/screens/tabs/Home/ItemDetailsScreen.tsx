@@ -15,7 +15,7 @@ import AppButton from "../../../components/AppButton";
 import DateRangePickerModal from "../../../components/modals/DateRangePickerModal";
 
 type Props = CompositeScreenProps<
-  StackScreenProps<StackParamList, "ItemDetails">,
+  StackScreenProps<HomeStackParamList, "ItemDetails">,
   BottomTabScreenProps<TabParamList, "Chat">
 >;
 
@@ -136,12 +136,18 @@ const ItemDetailsScreen: React.FC<Props> = ({route, navigation}) => {
       {
         label: "Wöchentlich",
         price:
-          item && `$${parseInt(item.price.slice(1), 10) * 7 * 0.9} / Woche`,
+          item &&
+          `${(parseInt(item.price.slice(2), 10) * 7 * 0.9).toFixed(
+            2,
+          )} € / Woche`,
       },
       {
         label: "Monatlich",
         price:
-          item && `$${parseInt(item.price.slice(1), 10) * 30 * 0.7} / Monat`,
+          item &&
+          `${(parseInt(item.price.slice(1), 10) * 30 * 0.7).toFixed(
+            2,
+          )} € / Monat`,
       },
     ];
 
@@ -151,7 +157,7 @@ const ItemDetailsScreen: React.FC<Props> = ({route, navigation}) => {
           <View key={index} style={styles.pricingRow}>
             <AppText>{interval.label}</AppText>
             <AppText bold style={{color: colors.primary}}>
-              {interval.price}
+              {interval?.price}
             </AppText>
           </View>
         ))}
@@ -172,14 +178,17 @@ const ItemDetailsScreen: React.FC<Props> = ({route, navigation}) => {
   }
 
   return (
-    <ScreenWrapper loading={loading} error={error}>
-      <AppText bold style={styles.title}>
+    <ScreenWrapper style={{gap: 12}} loading={loading} error={error}>
+      <AppText textSize="heading" bold>
         {item?.title}
       </AppText>
-      <AppText style={styles.category}>
+      <AppText textSize="large">
         Kategorie: {item?.category || "Nicht verfügbar"}
       </AppText>
-      <AppText bold style={[styles.price, {color: colors.primary}]}>
+      <AppText
+        textSize="large"
+        bold
+        style={[styles.price, {color: colors.primary}]}>
         Preis: {item?.price}
       </AppText>
       <AppText style={styles.description}>
@@ -230,9 +239,7 @@ const ItemDetailsScreen: React.FC<Props> = ({route, navigation}) => {
 export default ItemDetailsScreen;
 
 const styles = StyleSheet.create({
-  title: {fontSize: 24, marginBottom: 8},
-  category: {fontSize: 18, marginBottom: 8},
-  price: {fontSize: 20, marginBottom: 16},
+  price: {marginBottom: 16},
   description: {fontSize: 16},
   pricingContainer: {
     marginVertical: 16,

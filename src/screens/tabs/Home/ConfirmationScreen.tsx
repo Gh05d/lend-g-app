@@ -8,7 +8,7 @@ import AppText from "../../../components/AppText";
 import AppButton from "../../../components/AppButton";
 import ScreenWrapper from "../../../components/ScreenWrapper";
 
-type Props = StackScreenProps<StackParamList, "Confirmation">;
+type Props = StackScreenProps<HomeStackParamList, "Confirmation">;
 
 const ConfirmationScreen: React.FC<Props> = ({route, navigation}) => {
   const {itemID, userID, totalPrice, dateRange} = route.params;

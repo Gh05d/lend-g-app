@@ -4,10 +4,10 @@ import {useTheme} from "@react-navigation/native";
 import {BottomTabScreenProps} from "@react-navigation/bottom-tabs";
 import axios from "axios";
 
-import AppText from "../../components/AppText";
-import AppButton from "../../components/AppButton";
-import ScreenWrapper from "../../components/ScreenWrapper";
-import {UserContext} from "../../common/variables";
+import AppText from "../../../components/AppText";
+import AppButton from "../../../components/AppButton";
+import ScreenWrapper from "../../../components/ScreenWrapper";
+import {UserContext} from "../../../common/variables";
 
 type Props = BottomTabScreenProps<TabParamList, "ManageItems">;
 
@@ -90,7 +90,9 @@ const ManageItemsScreen: React.FC<Props> = ({navigation}) => {
   const renderItem = useCallback(
     ({item}: {item: Item}) => (
       <View style={[styles.itemContainer, {backgroundColor: colors.card}]}>
-        <AppText bold>{item.title}</AppText>
+        <AppText textSize="large" bold>
+          {item.title}
+        </AppText>
         <AppText>Preis: {item.price} €</AppText>
         {item.rentedPeriods && (
           <AppText>Verliehen: {item.rentedPeriods}</AppText>
@@ -98,7 +100,7 @@ const ManageItemsScreen: React.FC<Props> = ({navigation}) => {
         <AppButton
           style={{marginTop: 12}}
           title="Anfrage anzeigen"
-          onPress={() => navigation.navigate("Requests", {itemID})}
+          onPress={() => navigation.navigate("Requests", {itemID: item.id})}
         />
       </View>
     ),
@@ -146,7 +148,9 @@ const ManageItemsScreen: React.FC<Props> = ({navigation}) => {
         keyExtractor={(item, index) => `${item.id}-${index}`}
         renderItem={({item, section}) => section.renderItem({item})}
         renderSectionHeader={({section}) => (
-          <AppText style={styles.sectionTitle}>{section.title}</AppText>
+          <AppText textSize="heading" style={styles.sectionTitle}>
+            {section.title}
+          </AppText>
         )}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
@@ -157,7 +161,7 @@ const ManageItemsScreen: React.FC<Props> = ({navigation}) => {
 };
 
 const styles = StyleSheet.create({
-  sectionTitle: {fontSize: 20, marginVertical: 12},
+  sectionTitle: {marginVertical: 12},
   itemContainer: {padding: 16, gap: 12, marginBottom: 24, borderRadius: 8},
 });
 

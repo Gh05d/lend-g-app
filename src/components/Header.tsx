@@ -23,7 +23,7 @@ const Header: React.FC<{title: string}> = ({title}) => {
         onPress={() => navigation.dispatch(DrawerActions.openDrawer())}>
         <Icon name="bars" style={styles.icon} />
       </Pressable>
-      <AppText bold style={styles.title}>
+      <AppText textSize="large" bold style={styles.title}>
         {title}
       </AppText>
       <Pressable onPress={() => navigation.navigate("Notifications")}>
@@ -40,8 +40,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 10,
   },
-  title: {fontSize: 18, color: "#fff"},
-  icon: {fontSize: 24, color: "#fff"},
+  title: {color: "#fff"},
+  icon: {fontSize: 22, color: "#fff"},
 });
 
 export default Header;

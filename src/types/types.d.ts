@@ -12,7 +12,7 @@ declare module "@react-navigation/native" {
 }
 
 declare global {
-  type StackParamList = {
+  type HomeStackParamList = {
     Drawer: undefined;
     HomeScreen: undefined;
     ItemDetails: {id: string; userID: string};
@@ -24,12 +24,20 @@ declare global {
     };
   };
 
+  type ManageItemsStackParamList = {
+    ManageItems: undefined;
+    Requests: {itemID: string};
+  };
+
   type TabParamList = {
     Home: {
-      screen: keyof StackParamList;
-      params?: StackParamList[keyof StackParamList];
+      screen: keyof HomeStackParamList;
+      params?: HomeStackParamList[keyof HomeStackParamList];
     };
-    ManageItems: undefined;
+    ManageItems: {
+      screen: keyof ManageItemsStackParamList;
+      params?: ManageItemsStackParamList[keyof ManageItemsStackParamList];
+    };
     Explore: undefined;
     Chat: {userID: string};
     Profile: undefined;

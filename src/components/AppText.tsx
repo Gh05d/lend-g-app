@@ -6,6 +6,7 @@ interface Props extends TextProps {
   style?: StyleProp<TextStyle>;
   bold?: boolean;
   italic?: boolean;
+  textSize?: "small" | "regular" | "large" | "heading";
   children: React.ReactNode;
   testID?: string;
 }
@@ -15,24 +16,32 @@ const AppText: React.FC<Props> = ({
   style,
   bold,
   italic,
+  textSize = "regular",
   testID,
   ...textProps
 }) => {
   const {colors} = useTheme();
 
-  const fontSize =
+  const baseFontSize =
     Platform.OS === "ios" ? 16 : Platform.OS === "android" ? 14 : 20;
 
-  const computedFontSize =
-    style && typeof style === "object" && "fontSize" in style
-      ? (style.fontSize as number)
-      : fontSize;
-
-  const lineHeight = Math.round(computedFontSize * 1.5);
+  const fontSize = (() => {
+    switch (textSize) {
+      case "small":
+        return baseFontSize * 0.85;
+      case "large":
+        return baseFontSize * 1.2;
+      case "heading":
+        return baseFontSize * 1.5;
+      case "regular":
+      default:
+        return baseFontSize;
+    }
+  })();
 
   const textStyles: StyleProp<TextStyle> = {
-    fontSize: computedFontSize,
-    lineHeight,
+    fontSize,
+    lineHeight: fontSize + (fontSize * fontSize > 20 ? 1.5 : 1),
     fontWeight: bold ? "bold" : "normal",
     fontStyle: italic ? "italic" : "normal",
     fontFamily: "Roboto-Medium",
