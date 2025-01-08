@@ -12,6 +12,10 @@ declare module "@react-navigation/native" {
 }
 
 declare global {
+  namespace globalThis {
+    var server: any;
+  }
+
   type HomeStackParamList = {
     Drawer: undefined;
     HomeScreen: undefined;
@@ -26,12 +30,12 @@ declare global {
 
   type ManageItemsStackParamList = {
     ManageItems: undefined;
-    Requests: {itemID: string};
+    Requests: {requestID: string};
   };
 
   type ChatStackParamList = {
     Chats: undefined;
-    Chat: {chatID: string; userName: string; profilePicture?: string};
+    Chat: {chatID?: string; userName: string; profilePicture?: string};
   };
 
   type TabParamList = {
@@ -65,6 +69,10 @@ declare global {
     endDate: DateType | null;
   };
 
+  interface PastRentals extends DateRangeType {
+    userID: string;
+  }
+
   type Item = {
     id: string;
     title: string;
@@ -73,41 +81,36 @@ declare global {
     description: string;
     image: string;
     userID: string;
-    // rentedPeriods: {
-    //   start: string;
-    //   end: string;
-    // }[];
-    rentedPeriods: string;
+    pastRentals: PastRentals[];
+    currentlyRentedBy: string;
   };
 
   type User = {
     id: string;
-    firstName: string;
-    lastName: string;
-    maidenName: string;
-    age: number;
-    gender: string;
+    firstName?: string;
+    lastName?: string;
+    gender?: string;
     email: string;
-    phone: string;
-    username: string;
+    phone?: string;
+    userName: string;
     password: string;
-    birthDate: string;
-    image: string;
-    bloodGroup: string;
-    height: number;
-    weight: number;
-    eyeColor: string;
+    birthDate?: string;
+    profilePicture?: string;
   };
 
   interface Request {
-    userID: string;
+    id: string;
+    ownerID: string;
     itemID: string;
+    requesterID: string;
     price: string;
     timeFrame: DateRangeType;
+    status: "open" | "accepted" | "denied";
   }
 
   interface Message {
-    message: string;
+    chatID: string;
+    text: string;
     timestamp: Date;
     read?: Date | null;
     ownerID: string;

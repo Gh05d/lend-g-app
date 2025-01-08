@@ -2,6 +2,8 @@ import React, {useState, useEffect, useCallback} from "react";
 import {FlatList, Pressable, StyleSheet, View, Image} from "react-native";
 import {CompositeScreenProps, useTheme} from "@react-navigation/native";
 import axios from "axios";
+import {BottomTabScreenProps} from "@react-navigation/bottom-tabs";
+import {StackScreenProps} from "@react-navigation/stack";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 require("dayjs/locale/de");
@@ -9,13 +11,10 @@ dayjs.extend(relativeTime);
 
 import ScreenWrapper from "../../../components/ScreenWrapper";
 import AppText from "../../../components/AppText";
-import {BottomTabScreenProps} from "@react-navigation/bottom-tabs";
-import {StackScreenProps} from "@react-navigation/stack";
-import {mockChats} from "../../../common/mockData";
 
 type Props = CompositeScreenProps<
-  BottomTabScreenProps<TabParamList, "ChatsStack">,
-  StackScreenProps<ChatStackParamList>
+  StackScreenProps<ChatStackParamList, "Chats">,
+  BottomTabScreenProps<TabParamList, "ChatsStack">
 >;
 
 const ChatsScreen: React.FC<Props> = ({navigation}) => {
@@ -26,7 +25,11 @@ const ChatsScreen: React.FC<Props> = ({navigation}) => {
   useEffect(() => {
     (async function init() {
       try {
-        const userIDs = Array.from(new Set(mockChats.map(chat => chat.userID)));
+        const {data} = await axios.get<{chats: Chat[]}>("api/chats");
+
+        const userIDs = Array.from(
+          new Set(data.chats.map(chat => chat.userID)),
+        );
         const responses = await Promise.all(
           userIDs.map(id =>
             axios.get<User>(`https://dummyjson.com/users/${id}`),
@@ -38,7 +41,7 @@ const ChatsScreen: React.FC<Props> = ({navigation}) => {
           return acc;
         }, {});
 
-        setChats(mockChats);
+        setChats(data.chats);
         setUsers(usersData);
       } catch (error) {
         console.error("Failed to fetch users:", error);

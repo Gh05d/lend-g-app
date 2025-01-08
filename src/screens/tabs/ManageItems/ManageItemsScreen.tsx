@@ -11,16 +11,15 @@ import {UserContext} from "../../../common/variables";
 import {StackScreenProps} from "@react-navigation/stack";
 
 type Props = CompositeScreenProps<
-  BottomTabScreenProps<TabParamList, "ManageItemsStack">,
-  StackScreenProps<ManageItemsStackParamList>
+  StackScreenProps<ManageItemsStackParamList, "ManageItems">,
+  BottomTabScreenProps<TabParamList, "ManageItemsStack">
 >;
 
 const ManageItemsScreen: React.FC<Props> = ({navigation}) => {
   const [pendingRequests, setPendingRequests] = useState<Request[]>([]);
   const [itemsLent, setItemsLent] = useState<Item[]>([]);
   const [itemsBorrowed, setItemsBorrowed] = useState<Item[]>([]);
-  const [rentalHistory, setRentalHistory] = useState<Item[]>([]);
-  const [userNames, setUserNames] = useState<{[key: string]: string}>({});
+  const [rentalHistory, setRentalHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -31,49 +30,24 @@ const ManageItemsScreen: React.FC<Props> = ({navigation}) => {
 
   async function fetchData() {
     try {
-      const itemsResponse = await axios.get<Item[]>(
-        "http://my-json-server.typicode.com/Gh05d/lend-g-app/items",
-      );
-
-      const requestsResponse = await axios.get<Request[]>(
-        "http://my-json-server.typicode.com/Gh05d/lend-g-app/requests",
-      );
-
-      const userRequests = await Promise.all(
-        requestsResponse.data.map(request =>
-          axios.get<User>(`https://dummyjson.com/users/${request.userID}`),
-        ),
-      );
-
-      const usersMap = userRequests.reduce((map, response) => {
-        const user = response.data;
-        map[user.id] = user.username;
-        return map;
-      }, {} as {[key: string]: string});
-
-      setUserNames(usersMap);
+      const [requestsResponse, itemsResponse, itemsRentedBy] =
+        await Promise.all([
+          axios.get<Request[]>(`/api/requests/user/${userID}`),
+          axios.get<{items: Item[]}>(`/api/items/user/${userID}`),
+          axios.get<{items: Item[]}>(`/api/items/rentedBy/${userID}`),
+        ]);
 
       setItemsLent(
-        itemsResponse.data.filter(
-          item => item.userID === userID && item.currentlyRented,
+        itemsResponse.data.items.filter(
+          item => item.currentlyRentedBy && item.currentlyRentedBy != userID,
         ),
       );
 
       setPendingRequests(
-        requestsResponse.data.filter(request => request.userID != userID),
+        requestsResponse.data.filter(request => request.status == "open"),
       );
 
-      setItemsBorrowed(
-        itemsResponse.data.filter(item => item.borrowedBy === userID),
-      );
-
-      setRentalHistory(
-        itemsResponse.data.filter(
-          item =>
-            (item.userID === userID || item.borrowedBy === userID) &&
-            item.isHistory,
-        ),
-      );
+      setItemsBorrowed(itemsRentedBy.data.items);
     } catch (err) {
       setError(err as Error);
     } finally {
@@ -92,36 +66,27 @@ const ManageItemsScreen: React.FC<Props> = ({navigation}) => {
   };
 
   const renderItem = useCallback(
-    ({item}: {item: Item}) => (
+    ({item}: {item: any}) => (
       <View style={[styles.itemContainer, {backgroundColor: colors.card}]}>
         <AppText textSize="large" bold>
-          {item.title}
+          {item.item.title}
         </AppText>
-        <AppText>Preis: {item.price}</AppText>
-        {item.rentedPeriods && (
-          <AppText>Verliehen: {item.rentedPeriods}</AppText>
-        )}
+        <AppText>{`Vermietet an: ${item.requester.userName}`}</AppText>
+        <AppText>{`Zeitraum: ${item.timeFrame.startDate} - ${item.timeFrame.endDate}`}</AppText>
         <AppButton
           style={{marginTop: 12}}
-          title="Anfrage anzeigen"
-          onPress={() => navigation.navigate("Requests", {itemID: item.id})}
+          title="Details anzeigen"
+          onPress={() => navigation.navigate("Requests", {requestID: item.id})}
         />
       </View>
     ),
-    [colors.card, colors.primary],
+    [colors.card],
   );
 
   const sections = [
     {
       title: "Offene Anfragen",
-      data: pendingRequests.map(request => ({
-        id: request.itemID,
-        title:
-          `Nutzer ${userNames[request.userID]} fragt Miete an.` ||
-          "Unbekannter Benutzer",
-        price: request.price,
-        rentedPeriods: `${request.timeFrame.startDate} - ${request.timeFrame.endDate}`,
-      })),
+      data: pendingRequests,
       renderItem,
       emptyText: "Keine offenen Anfragen",
     },

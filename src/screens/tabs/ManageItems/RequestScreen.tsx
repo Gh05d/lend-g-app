@@ -1,31 +1,22 @@
 import React, {useEffect, useState} from "react";
 import {StyleSheet, View, TextInput, Alert} from "react-native";
 import {StackScreenProps} from "@react-navigation/stack";
+import {CompositeScreenProps, useTheme} from "@react-navigation/native";
+import {BottomTabScreenProps} from "@react-navigation/bottom-tabs";
 import axios from "axios";
 import dayjs from "dayjs";
-import {useTheme} from "@react-navigation/native";
 
 import AppText from "../../../components/AppText";
 import AppButton from "../../../components/AppButton";
 import ScreenWrapper from "../../../components/ScreenWrapper";
 
-interface Request {
-  id: string;
-  userID: string;
-  itemID: string;
-  timeFrame: {startDate: string; endDate: string};
-  price: string;
-}
-
-interface User {
-  id: string;
-  username: string;
-}
-
-type Props = StackScreenProps<ManageItemsStackParamList, "Requests">;
+type Props = CompositeScreenProps<
+  StackScreenProps<ManageItemsStackParamList, "Requests">,
+  BottomTabScreenProps<TabParamList, "ManageItemsStack">
+>;
 
 const RequestScreen: React.FC<Props> = ({route, navigation}) => {
-  const {itemID} = route.params as {itemID: string};
+  const {requestID} = route.params;
   const [request, setRequest] = useState<Request>();
   const [user, setUser] = useState<User | null>(null);
   const [totalPrice, setTotalPrice] = React.useState(0);
@@ -38,22 +29,22 @@ const RequestScreen: React.FC<Props> = ({route, navigation}) => {
   useEffect(() => {
     const fetchRequestAndUser = async () => {
       try {
-        const {data} = await axios.get<Request[]>(
-          `http://my-json-server.typicode.com/Gh05d/lend-g-app/requests/`,
+        const {data} = await axios.get<{request: Request}>(
+          `/api/requests/${requestID}`,
         );
-        const foundRequest = data.find(item => item.itemID === itemID);
+
+        const foundRequest = data.request;
+
         setRequest(foundRequest);
 
         if (foundRequest) {
-          const userResponse = await axios.get<User>(
-            `https://dummyjson.com/users/${foundRequest.userID}`,
+          const userResponse = await axios.get<{user: User}>(
+            `/api/users/${foundRequest.ownerID}`,
           );
-          setUser(userResponse.data);
+          setUser(userResponse.data.user);
 
           const defaultPrice =
-            parseFloat(
-              foundRequest.price.replace("/day", "").replace("$", ""),
-            ) *
+            parseFloat(foundRequest.price.replace("€", "")) *
             calculateDays(
               foundRequest.timeFrame.startDate,
               foundRequest.timeFrame.endDate,
@@ -72,7 +63,7 @@ const RequestScreen: React.FC<Props> = ({route, navigation}) => {
     };
 
     fetchRequestAndUser();
-  }, [itemID]);
+  }, [requestID]);
 
   function calculateDays(startDate: string, endDate: string) {
     const start = dayjs(startDate);
@@ -82,7 +73,7 @@ const RequestScreen: React.FC<Props> = ({route, navigation}) => {
   }
 
   function calculatePrice(pricePerDay: string, days: number) {
-    const price = parseFloat(pricePerDay.replace("/day", "").replace("$", ""));
+    const price = parseFloat(pricePerDay.replace("€", ""));
     return (price * days).toFixed(2);
   }
 
@@ -95,7 +86,7 @@ const RequestScreen: React.FC<Props> = ({route, navigation}) => {
   const handleApprove = async (requestID: string) => {
     Alert.alert(
       "Anfrage genehmigt",
-      `Nutzer ${user?.username} bekommt eine Bestätigung. Bitte bereite die Übergabe vor.`,
+      `Nutzer ${user?.userName} bekommt eine Bestätigung. Bitte bereite die Übergabe vor.`,
       [{onPress: () => navigation.goBack()}],
     );
   };
@@ -105,15 +96,19 @@ const RequestScreen: React.FC<Props> = ({route, navigation}) => {
     navigation.goBack();
   };
 
-  const handleContactUser = () => {
-    navigation.navigate("Chat", {userID: user?.id});
-  };
+  function handleContactUser() {
+    if (user)
+      navigation.navigate("ChatsStack", {
+        screen: "Chat",
+        params: {userName: user.userName!, profilePicture: user.profilePicture},
+      });
+  }
 
   return (
     <ScreenWrapper loading={loading} error={error}>
       <View style={[styles.container, {backgroundColor: colors.card}]}>
         <AppText textSize="heading" bold>
-          Anfrage von: {user?.username || "Laden..."}
+          Anfrage von: {user?.userName || "Laden..."}
         </AppText>
         <AppText>Anzahl der Tage: {days}</AppText>
         <AppText>
@@ -123,8 +118,8 @@ const RequestScreen: React.FC<Props> = ({route, navigation}) => {
 
         <View style={{gap: 12, marginTop: 12}}>
           <AppText>
-            Preis: {price} € (
-            {request?.price.replace("$", "").replace("/day", " € pro Tag")})
+            Preis: {price} € ({request?.price.replace(/€(\d+)/, "$1 € pro Tag")}
+            )
           </AppText>
 
           <View style={styles.inlineInput}>

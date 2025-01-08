@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from "react";
-import {StyleSheet, Alert, View, Image} from "react-native";
+import {StyleSheet, Alert, View, Image, ScrollView} from "react-native";
 import {CompositeScreenProps, useTheme} from "@react-navigation/native";
 import axios from "axios";
 import type {StackScreenProps} from "@react-navigation/stack";
@@ -16,7 +16,7 @@ import DateRangePickerModal from "../../../components/modals/DateRangePickerModa
 
 type Props = CompositeScreenProps<
   StackScreenProps<HomeStackParamList, "ItemDetails">,
-  BottomTabScreenProps<TabParamList, "Chat">
+  BottomTabScreenProps<TabParamList, "ManageItemsStack">
 >;
 
 const ItemDetailsScreen: React.FC<Props> = ({route, navigation}) => {
@@ -34,14 +34,12 @@ const ItemDetailsScreen: React.FC<Props> = ({route, navigation}) => {
     (async function fetchDetails() {
       try {
         const [itemResponse, userResponse] = await Promise.all([
-          axios.get<Item>(
-            `http://my-json-server.typicode.com/Gh05d/lend-g-app/items/${id}`,
-          ),
-          axios.get<User>(`https://dummyjson.com/users/${userID}`),
+          axios.get<{item: Item}>(`/api/items/${id}`),
+          axios.get<{user: User}>(`/api/users/${userID}`),
         ]);
 
-        setItem(itemResponse.data);
-        setUser(userResponse.data);
+        setItem(itemResponse.data.item);
+        setUser(userResponse.data.user);
       } catch (err) {
         setError(err as Error);
       } finally {
@@ -50,36 +48,9 @@ const ItemDetailsScreen: React.FC<Props> = ({route, navigation}) => {
     })();
   }, [id, userID]);
 
-  const isAvailable = item?.rentedPeriods
-    ? !parseRentedPeriods(item.rentedPeriods).some(
-        period =>
-          new Date() &&
-          dayjs(new Date()).isBetween(
-            period.startDate,
-            period.endDate,
-            null,
-            "[]",
-          ),
-      )
-    : true;
-
-  function parseRentedPeriods(rentedPeriods: string) {
-    return rentedPeriods.split(",").map(range => {
-      const [start, end] = range.split(":");
-      const startDate = dayjs(start.trim());
-      const endDate = dayjs(end.trim());
-
-      if (!startDate.isValid() || !endDate.isValid()) {
-        throw new Error(`Invalid date range: ${range}`);
-      }
-
-      return {startDate, endDate};
-    });
-  }
-
   function handleSubmit(dateRange: DateRangeType) {
     const isConflict = item?.rentedPeriods
-      ? parseRentedPeriods(item.rentedPeriods).some(
+      ? item?.rentedPeriods.some(
           period =>
             dayjs(dateRange.startDate).isBetween(
               period.startDate,
@@ -124,14 +95,14 @@ const ItemDetailsScreen: React.FC<Props> = ({route, navigation}) => {
       itemID: item!.id,
       userID: user!.id,
       totalPrice: duration * parseInt(item!.price.slice(1), 10),
-      dateRange,
+      dateRange: JSON.stringify(dateRange),
     });
 
     setShow(false);
   }
 
   function renderPricing() {
-    const purePrice = parseInt(item?.price.replace(" € / Tag", ""), 10);
+    const purePrice = parseInt(item?.price.replace("€", ""), 10);
 
     const pricingIntervals = [
       {label: "Täglich", price: item?.price},
@@ -160,72 +131,85 @@ const ItemDetailsScreen: React.FC<Props> = ({route, navigation}) => {
   }
 
   function isDateDisabled(date: DateType) {
-    if (!item?.rentedPeriods) return false;
+    if (!item?.rentedPeriods?.length) return false;
 
-    return parseRentedPeriods(item.rentedPeriods).some(period =>
+    return item.rentedPeriods.some(period =>
       dayjs(date).isBetween(period.startDate, period.endDate, null, "[]"),
     );
   }
 
   function navigateToChat() {
-    if (user) navigation.navigate("Chat", {userID: user.id});
+    if (user)
+      navigation.navigate("ChatsStack", {
+        screen: "Chat",
+        params: {userName: user.userName!, profilePicture: user.profilePicture},
+      });
   }
 
   return (
-    <ScreenWrapper style={{gap: 12}} loading={loading} error={error}>
-      <AppText textSize="heading" bold>
-        {item?.title}
-      </AppText>
-      <AppText textSize="large">
-        Kategorie: {item?.category || "Nicht verfügbar"}
-      </AppText>
-      <AppText
-        textSize="large"
-        bold
-        style={[styles.price, {color: colors.primary}]}>
-        Preis: {item?.price}
-      </AppText>
-      <AppText style={styles.description}>
-        Beschreibung: {item?.description || "Keine Beschreibung verfügbar."}
-      </AppText>
-
-      {renderPricing()}
-
-      <View style={styles.availabilityContainer}>
-        <AppButton
-          onPress={() => setShow(true)}
-          title={isAvailable ? "Datum auswählen" : "Nicht verfügbar"}
-          color={isAvailable ? colors.secondary : colors.error}
+    <ScreenWrapper loading={loading} error={error}>
+      <ScrollView style={{gap: 12}}>
+        <AppText textSize="heading" bold>
+          {item?.title}
+        </AppText>
+        <Image
+          source={{uri: item?.image}}
+          style={styles.itemImage}
+          resizeMode="cover"
         />
+        <AppText textSize="large">
+          Kategorie: {item?.category || "Nicht verfügbar"}
+        </AppText>
+        <AppText
+          textSize="large"
+          bold
+          style={[styles.price, {color: colors.primary}]}>
+          Preis: {item?.price}
+        </AppText>
+        <AppText style={styles.description}>
+          Beschreibung: {item?.description || "Keine Beschreibung verfügbar."}
+        </AppText>
+        {renderPricing()}
+        <View style={styles.availabilityContainer}>
+          <AppButton
+            onPress={() => setShow(true)}
+            title={
+              !item?.currentlyRentedBy ? "Datum auswählen" : "Nicht verfügbar"
+            }
+            color={!item?.currentlyRentedBy ? colors.secondary : colors.error}
+          />
 
-        <DateRangePickerModal
-          show={show}
-          close={() => setShow(false)}
-          submit={handleSubmit}
-          disabledDates={isDateDisabled}
-        />
-      </View>
-
-      {user && (
-        <View style={[styles.userContainer, {backgroundColor: colors.card}]}>
-          <AppText bold textSize="heading">
-            Eigentümer Informationen
-          </AppText>
-
-          <View style={styles.userData}>
-            <Image source={{uri: user.image}} style={styles.userImage} />
-            <View style={styles.userInfo}>
-              <AppText>
-                Name: {user.firstName} {user.lastName}
-              </AppText>
-              <AppText>Email: {user.email}</AppText>
-              <AppText>Telefon: {user.phone}</AppText>
-            </View>
-          </View>
-
-          <AppButton onPress={navigateToChat} title="Chat mit Eigentümer" />
+          <DateRangePickerModal
+            show={show}
+            close={() => setShow(false)}
+            submit={handleSubmit}
+            disabledDates={isDateDisabled}
+          />
         </View>
-      )}
+        {user && (
+          <View style={[styles.userContainer, {backgroundColor: colors.card}]}>
+            <AppText bold textSize="heading">
+              Eigentümer Informationen
+            </AppText>
+
+            <View style={styles.userData}>
+              <Image
+                source={{uri: user.profilePicture}}
+                style={styles.userImage}
+              />
+              <View style={styles.userInfo}>
+                <AppText>
+                  Name: {user.firstName} {user.lastName}
+                </AppText>
+                <AppText>Email: {user.email}</AppText>
+                <AppText>Telefon: {user.phone}</AppText>
+              </View>
+            </View>
+
+            <AppButton onPress={navigateToChat} title="Chat mit Eigentümer" />
+          </View>
+        )}
+      </ScrollView>
     </ScreenWrapper>
   );
 };
@@ -254,4 +238,10 @@ const styles = StyleSheet.create({
   userData: {flexDirection: "row", gap: 16},
   userImage: {width: 60, height: 60, borderRadius: 25},
   userInfo: {flex: 1, gap: 8},
+  itemImage: {
+    width: "100%",
+    height: 200,
+    borderRadius: 8,
+    marginVertical: 16,
+  },
 });

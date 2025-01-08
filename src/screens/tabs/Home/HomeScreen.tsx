@@ -5,24 +5,21 @@ import {
   StyleSheet,
   TextInput,
   RefreshControl,
+  Image,
+  View,
 } from "react-native";
 import {useTheme} from "@react-navigation/native";
 import axios from "axios";
-
 import type {CompositeScreenProps} from "@react-navigation/native";
 import type {BottomTabScreenProps} from "@react-navigation/bottom-tabs";
 import type {StackScreenProps} from "@react-navigation/stack";
-import type {DrawerScreenProps} from "@react-navigation/drawer";
 
 import ScreenWrapper from "../../../components/ScreenWrapper";
 import AppText from "../../../components/AppText";
 
 type Props = CompositeScreenProps<
-  BottomTabScreenProps<TabParamList, "HomeStack">,
-  CompositeScreenProps<
-    StackScreenProps<HomeStackParamList>,
-    DrawerScreenProps<DrawerParamList>
-  >
+  StackScreenProps<HomeStackParamList, "HomeScreen">,
+  BottomTabScreenProps<TabParamList, "HomeStack">
 >;
 
 const HomeScreen: React.FC<Props> = ({navigation}) => {
@@ -34,10 +31,9 @@ const HomeScreen: React.FC<Props> = ({navigation}) => {
 
   const fetchItems = async () => {
     try {
-      const {data} = await axios<Item[]>(
-        "http://my-json-server.typicode.com/Gh05d/lend-g-app/items",
-      );
-      setItems(data);
+      const {data} = await axios.get<{items: Item[]}>("/api/items");
+
+      setItems(data.items);
     } catch (err) {
       setError(err as Error);
     } finally {
@@ -61,16 +57,41 @@ const HomeScreen: React.FC<Props> = ({navigation}) => {
   const renderItem = useCallback(
     ({item}: {item: (typeof items)[0]}) => (
       <Pressable
-        style={[styles.itemContainer, {backgroundColor: colors.card}]}
+        style={[
+          styles.itemContainer,
+          {
+            backgroundColor: item.currentlyRentedBy ? "#ccc" : colors.card,
+            filter: item.currentlyRentedBy
+              ? [{grayscale: 0.6, saturate: 0.5}]
+              : [],
+          },
+        ]}
         onPress={() =>
           navigation.navigate("ItemDetails", {id: item.id, userID: item.userID})
         }
         accessibilityLabel={`Übersichtskarte von ${item.title}. Navigiert zur Übersichtsseite.`}>
-        <AppText textSize="large">{item.title}</AppText>
-        <AppText style={[{color: colors.primary}]}>{item.price}</AppText>
+        <AppText textSize="large" bold>
+          {item.title}
+        </AppText>
+
+        <Image
+          source={{uri: item.image}}
+          style={styles.itemImage}
+          resizeMode="cover"
+        />
+        <View
+          style={[styles.tagContainer, {backgroundColor: colors.notification}]}>
+          <AppText textSize="small">{item.category}</AppText>
+        </View>
+        <AppText style={[{color: colors.primary}]}>
+          {item.price.substring(1)} €
+        </AppText>
+        <AppText>
+          {!item.currentlyRentedBy ? "Verfügbar" : "Nicht verfügbar"}
+        </AppText>
       </Pressable>
     ),
-    [colors.card, navigation, colors.primary],
+    [colors.card, colors.primary],
   );
 
   const renderHeader = useCallback(
@@ -126,5 +147,16 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     elevation: 2,
     gap: 12,
+  },
+  itemImage: {
+    width: "100%",
+    height: 120,
+    borderRadius: 8,
+  },
+  tagContainer: {
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    alignSelf: "flex-start",
   },
 });
