@@ -36,6 +36,7 @@ const AppButton: React.FC<Props> = props => {
       disabled={disabled}
       {...buttonProps}>
       <AppText
+        selectable={false}
         bold
         style={[
           styles.text,

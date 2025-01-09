@@ -1,9 +1,10 @@
 import React from "react";
 import {View, StyleSheet, ViewStyle, StyleProp} from "react-native";
-import {useTheme} from "@react-navigation/native";
+import {useNavigation, useRoute, useTheme} from "@react-navigation/native";
 
 import Loading from "./Loading";
 import Error from "./Error";
+import AppButton from "./AppButton";
 
 interface ScreenWrapperProps {
   children: React.ReactNode;
@@ -21,10 +22,20 @@ const ScreenWrapper: React.FC<ScreenWrapperProps> = ({
   error,
 }) => {
   const {colors} = useTheme();
+  const navigation = useNavigation();
+  const route = useRoute();
 
   function renderView() {
     if (loading) return <Loading text="Lade" />;
-    if (error) return <Error error={error} />;
+    if (error)
+      return (
+        <Error error={error}>
+          <AppButton
+            title="Erneut versuchen"
+            onPress={() => navigation.replace(route?.name)}
+          />
+        </Error>
+      );
     return children;
   }
 

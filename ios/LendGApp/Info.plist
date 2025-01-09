@@ -32,6 +32,19 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
+	<dict>
+	<key>CFBundleURLTypes</key>
+		<array>
+			<dict>
+			<key>CFBundleURLName</key>
+			<string>com.lendgapp</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>lendg</string>
+			</array>
+			</dict>
+		</array>
+	</dict>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string></string>
 	<key>UILaunchStoryboardName</key>

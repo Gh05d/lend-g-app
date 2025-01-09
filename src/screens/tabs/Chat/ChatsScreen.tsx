@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useCallback} from "react";
+import React, {useState, useEffect, useCallback, useContext} from "react";
 import {FlatList, Pressable, StyleSheet, View, Image} from "react-native";
 import {CompositeScreenProps, useTheme} from "@react-navigation/native";
 import axios from "axios";
@@ -11,6 +11,7 @@ dayjs.extend(relativeTime);
 
 import ScreenWrapper from "../../../components/ScreenWrapper";
 import AppText from "../../../components/AppText";
+import {UserContext} from "../../../common/variables";
 
 type Props = CompositeScreenProps<
   StackScreenProps<ChatStackParamList, "Chats">,
@@ -19,42 +20,54 @@ type Props = CompositeScreenProps<
 
 const ChatsScreen: React.FC<Props> = ({navigation}) => {
   const {colors} = useTheme();
-  const [chats, setChats] = useState<Chat[]>();
+  const [chats, setChats] = useState<ChatPreview[]>();
   const [users, setUsers] = useState<Record<string, User>>({});
+  const [error, setError] = React.useState<null | Error>(null);
+  const [loading, setLoading] = React.useState(true);
+
+  const user = useContext(UserContext);
 
   useEffect(() => {
     (async function init() {
       try {
-        const {data} = await axios.get<{chats: Chat[]}>("api/chats");
-
-        const userIDs = Array.from(
-          new Set(data.chats.map(chat => chat.userID)),
-        );
-        const responses = await Promise.all(
-          userIDs.map(id =>
-            axios.get<User>(`https://dummyjson.com/users/${id}`),
-          ),
+        const {data} = await axios.get<ChatPreview[]>(
+          `api/chats/user/${user?.id}`,
         );
 
-        const usersData = responses.reduce<Record<string, User>>((acc, res) => {
-          acc[res.data.id] = res.data;
-          return acc;
-        }, {});
+        const userIDs = new Set();
 
-        setChats(data.chats);
+        data.forEach(({ownerID, userID}) => {
+          if (userID != user?.id) userIDs.add(userID);
+          if (ownerID != user?.id) userIDs.add(ownerID);
+        });
+
+        const responses = await axios.get<{users: User[]}>(`/api/users/bulk`, {
+          params: {userIDs: [...userIDs].join(",")},
+        });
+
+        const usersData = responses.data.users.reduce<Record<string, User>>(
+          (acc, cV) => {
+            acc[cV.id] = {...cV};
+            return acc;
+          },
+          {},
+        );
+
+        setChats(data);
         setUsers(usersData);
-      } catch (error) {
-        console.error("Failed to fetch users:", error);
+      } catch (err) {
+        setError(err as Error);
+      } finally {
+        setLoading(false);
       }
     })();
-  }, []);
+  }, [user?.id]);
 
   const renderChatCard = useCallback(
-    ({item}: {item: Chat}) => {
-      const hasUnreadMessages = item.messages.some(message => !message.read);
+    ({item}: {item: ChatPreview}) => {
+      const hasUnreadMessages = !item.lastMessage?.read;
 
-      const lastMessage = item.messages[item.messages.length - 1];
-      const lastTimestamp = dayjs(lastMessage.timestamp).locale("de");
+      const lastTimestamp = dayjs(item.lastMessage?.timestamp).locale("de");
       const isToday = lastTimestamp.isSame(dayjs(), "day");
       const displayTime = isToday
         ? lastTimestamp.format("HH:mm")
@@ -66,22 +79,25 @@ const ChatsScreen: React.FC<Props> = ({navigation}) => {
           onPress={() => {
             navigation.navigate("Chat", {
               chatID: item.id,
-              userName: users[item.userID]?.username,
-              profilePicture: users[item.userID].image,
+              userName: users[item.userID]?.userName,
+              profilePicture: users[item.userID].userName,
             });
           }}>
           <View style={styles.row}>
             <Image
-              source={{uri: users[item.userID]?.image}}
+              source={{uri: users[item.userID]?.profilePicture}}
               style={[styles.avatar, {backgroundColor: colors.background}]}
             />
             <View style={styles.contentContainer}>
-              <AppText bold style={{fontSize: 16}}>
-                {users[item.userID]?.username || "Laden..."}
+              <AppText bold textSize="large">
+                {users[item.userID]?.userName || "Laden..."}
               </AppText>
 
-              <AppText style={{color: "#aaa"}} numberOfLines={1}>
-                {lastMessage.message}
+              <AppText
+                style={{color: "#aaa"}}
+                numberOfLines={1}
+                ellipsizeMode="tail">
+                {item.lastMessage?.text?.trim() || "Keine Nachricht"}
               </AppText>
             </View>
 
@@ -104,7 +120,7 @@ const ChatsScreen: React.FC<Props> = ({navigation}) => {
   );
 
   return (
-    <ScreenWrapper loading={Object.keys(users).length === 0} error={null}>
+    <ScreenWrapper loading={loading} error={error}>
       <FlatList
         data={chats}
         keyExtractor={item => item.id}
@@ -132,7 +148,7 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     position: "relative",
   },
-  contentContainer: {flex: 1},
+  contentContainer: {height: 44, flex: 1, justifyContent: "space-between"},
   unreadIndicator: {
     width: 16,
     height: 16,

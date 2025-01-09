@@ -3,11 +3,11 @@ import {StyleSheet, View} from "react-native";
 
 interface Props {}
 
-const ExploreScreen: React.FC<Props> = props => {
+const CompleteSignUp: React.FC<Props> = props => {
   return <View style={styles.root}></View>;
 };
 
-export default ExploreScreen;
+export default CompleteSignUp;
 
 const styles = StyleSheet.create({
   root: {flex: 1, backgroundColor: "#fff"},

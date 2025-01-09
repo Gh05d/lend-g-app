@@ -16,6 +16,14 @@ declare global {
     var server: any;
   }
 
+  type AuthStackParamList = {
+    Login: undefined;
+    SignUp: undefined;
+    NewWallet: undefined;
+    CompleteSignUp: undefined;
+    UseExistingWallet: undefined;
+  };
+
   type HomeStackParamList = {
     Drawer: undefined;
     HomeScreen: undefined;
@@ -24,12 +32,12 @@ declare global {
       itemID: string;
       userID: string;
       totalPrice: number;
-      dateRange: DateRangeType;
+      dateRange: string;
     };
   };
 
   type ManageItemsStackParamList = {
-    ManageItems: undefined;
+    ManageItems: {requestID?: string};
     Requests: {requestID: string};
   };
 
@@ -47,7 +55,7 @@ declare global {
       screen: keyof ManageItemsStackParamList;
       params?: ManageItemsStackParamList[keyof ManageItemsStackParamList];
     };
-    Explore: undefined;
+    QRCodes: undefined;
     ChatsStack: {
       screen: keyof ChatStackParamList;
       params?: ChatStackParamList[keyof ChatStackParamList];
@@ -105,10 +113,16 @@ declare global {
     requesterID: string;
     price: string;
     timeFrame: DateRangeType;
-    status: "open" | "accepted" | "denied";
+    status: "open" | "accepted" | "denied" | "active" | "closed";
+  }
+
+  interface FullRequest extends Request {
+    requester: User;
+    item: Item;
   }
 
   interface Message {
+    id: string;
     chatID: string;
     text: string;
     timestamp: Date;
@@ -117,9 +131,13 @@ declare global {
   }
 
   interface Chat {
+    createdAt: string;
     id: string;
     ownerID: string;
     userID: string;
-    messages: Message[];
+  }
+
+  interface ChatPreview extends Chat {
+    lastMessage: Message;
   }
 }

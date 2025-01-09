@@ -1,5 +1,11 @@
 import React, {useCallback, useContext, useEffect, useState} from "react";
-import {SectionList, StyleSheet, View, RefreshControl} from "react-native";
+import {
+  SectionList,
+  StyleSheet,
+  View,
+  RefreshControl,
+  Alert,
+} from "react-native";
 import {CompositeScreenProps, useTheme} from "@react-navigation/native";
 import {BottomTabScreenProps} from "@react-navigation/bottom-tabs";
 import axios from "axios";
@@ -7,47 +13,58 @@ import axios from "axios";
 import AppText from "../../../components/AppText";
 import AppButton from "../../../components/AppButton";
 import ScreenWrapper from "../../../components/ScreenWrapper";
+import QRCodeModal from "../../../components/modals/QRCodeModal";
 import {UserContext} from "../../../common/variables";
 import {StackScreenProps} from "@react-navigation/stack";
+import {germanDate} from "../../../common/functions";
 
 type Props = CompositeScreenProps<
   StackScreenProps<ManageItemsStackParamList, "ManageItems">,
   BottomTabScreenProps<TabParamList, "ManageItemsStack">
 >;
 
-const ManageItemsScreen: React.FC<Props> = ({navigation}) => {
-  const [pendingRequests, setPendingRequests] = useState<Request[]>([]);
-  const [itemsLent, setItemsLent] = useState<Item[]>([]);
-  const [itemsBorrowed, setItemsBorrowed] = useState<Item[]>([]);
+const ManageItemsScreen: React.FC<Props> = ({route, navigation}) => {
+  const [pendingRequests, setPendingRequests] = useState<FullRequest[]>([]);
+  const [confirmedRequests, setConfirmedRequests] = useState<FullRequest[]>([]);
+  const [itemsLent, setItemsLent] = useState<FullRequest[]>([]);
+  const [itemsBorrowed, setItemsBorrowed] = useState<FullRequest[]>([]);
   const [rentalHistory, setRentalHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [qrCodeValue, setQrCodeValue] = useState<string | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
+
+  const {requestID} = route?.params;
 
   const {colors} = useTheme();
   const currentUser = useContext(UserContext);
-  const userID = currentUser!.id;
+  const ownUserID = currentUser!.id;
 
   async function fetchData() {
     try {
-      const [requestsResponse, itemsResponse, itemsRentedBy] =
-        await Promise.all([
-          axios.get<Request[]>(`/api/requests/user/${userID}`),
-          axios.get<{items: Item[]}>(`/api/items/user/${userID}`),
-          axios.get<{items: Item[]}>(`/api/items/rentedBy/${userID}`),
-        ]);
+      const [requestsResponse, itemsRentedBy] = await Promise.all([
+        axios.get<FullRequest[]>(`/api/requests/to-user`, {
+          params: {ownerID: ownUserID},
+        }),
+        axios.get<FullRequest[]>(`/api/requests/from-user`, {
+          params: {requesterID: ownUserID, status: "active"},
+        }),
+      ]);
 
       setItemsLent(
-        itemsResponse.data.items.filter(
-          item => item.currentlyRentedBy && item.currentlyRentedBy != userID,
-        ),
+        requestsResponse.data.filter(request => request.status == "active"),
       );
-
       setPendingRequests(
         requestsResponse.data.filter(request => request.status == "open"),
       );
-
-      setItemsBorrowed(itemsRentedBy.data.items);
+      setConfirmedRequests(
+        requestsResponse.data.filter(request => request.status == "accepted"),
+      );
+      setRentalHistory(
+        requestsResponse.data.filter(request => request.status == "closed"),
+      );
+      setItemsBorrowed(itemsRentedBy.data);
     } catch (err) {
       setError(err as Error);
     } finally {
@@ -59,53 +76,127 @@ const ManageItemsScreen: React.FC<Props> = ({navigation}) => {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    (async function confirm() {
+      try {
+        setLoading(true);
+        const res = await axios.patch("/api/qr/scan", {
+          requestID,
+        });
+
+        if (!res.data.success) throw Error("Something went wrong");
+        Alert.alert(
+          "Übergabe bestätigt",
+          "Vielen Dank. Der Artikel wurde erfolgeich übergeben",
+        );
+      } catch (err) {
+        console.error(err as Error);
+        Alert.alert(
+          "Bestätigung fehlgeschlagen",
+          "Leider ist etwas schiefgelaufen. Bitte versuche erneut den Code zu scannen.",
+        );
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [requestID]);
+
+  async function debug(data: {requestID: string}) {
+    try {
+      setLoading(true);
+      const res = await axios.patch("/api/qr/scan", data);
+      console.log("🚀 ~ confirm ~ res:", res);
+      await fetchData();
+
+      Alert.alert(
+        "Übergabe bestätigt",
+        "Vielen Dank. Der Artikel wurde erfolgeich übergeben",
+      );
+    } catch (err) {
+      console.error(err as Error);
+      Alert.alert(
+        "Bestätigung fehlgeschlagen",
+        "Leider ist etwas schiefgelaufen. Bitte versuche erneut den Code zu scannen.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
   const onRefresh = async () => {
     setRefreshing(true);
     await fetchData();
     setRefreshing(false);
   };
 
-  const renderItem = useCallback(
-    ({item}: {item: any}) => (
+  const handleQRCode = (request: FullRequest) => {
+    setQrCodeValue(`lendg://transaction?requestID=${request.id}`);
+    setModalVisible(true);
+  };
+
+  const renderGenericItem = useCallback(
+    ({item}: {item: FullRequest}) => (
       <View style={[styles.itemContainer, {backgroundColor: colors.card}]}>
         <AppText textSize="large" bold>
           {item.item.title}
         </AppText>
-        <AppText>{`Vermietet an: ${item.requester.userName}`}</AppText>
-        <AppText>{`Zeitraum: ${item.timeFrame.startDate} - ${item.timeFrame.endDate}`}</AppText>
-        <AppButton
-          style={{marginTop: 12}}
-          title="Details anzeigen"
-          onPress={() => navigation.navigate("Requests", {requestID: item.id})}
-        />
+        <AppText>
+          {item.status === "open" ? "Anfrage" : "Gemietet"} von:{" "}
+          {item.requester.userName}
+        </AppText>
+        <AppText>{`Zeitraum: ${germanDate(
+          item.timeFrame.startDate,
+        )} - ${germanDate(item.timeFrame.endDate)}`}</AppText>
+        <>
+          {(item.status == "accepted" || item.status == "active") && (
+            <AppButton
+              style={{marginTop: 12}}
+              title="Details anzeigen"
+              onPress={() =>
+                navigation.navigate("Requests", {requestID: item.id})
+              }
+            />
+          )}
+          <AppButton
+            title="QR-Code anzeigen"
+            onPress={() => debug({requestID: item.id})}
+            color={colors.primary}
+          />
+        </>
       </View>
     ),
-    [colors.card],
+    [colors.card, colors.primary],
   );
 
   const sections = [
     {
       title: "Offene Anfragen",
       data: pendingRequests,
-      renderItem,
+      renderItem: ({item}: {item: FullRequest}) => renderGenericItem({item}),
       emptyText: "Keine offenen Anfragen",
+    },
+    {
+      title: "Angenommene Anfragen",
+      data: confirmedRequests,
+      renderItem: ({item}: {item: FullRequest}) => renderGenericItem({item}),
+      emptyText: "Keine angenommenen Anfragen",
     },
     {
       title: "Verliehene Artikel",
       data: itemsLent,
-      renderItem,
+      renderItem: ({item}: {item: FullRequest}) => renderGenericItem({item}),
       emptyText: "Keine verliehenen Artikel",
     },
     {
       title: "Geliehene Artikel",
       data: itemsBorrowed,
-      renderItem,
+      renderItem: ({item}: {item: FullRequest}) => renderGenericItem({item}),
       emptyText: "Keine geliehenen Artikel",
     },
     {
       title: "Vergangene Transaktionen",
       data: rentalHistory,
-      renderItem,
+      renderItem: ({item}: {item: FullRequest}) => renderGenericItem({item}),
       emptyText: "Keine vergangenen Transaktionen",
     },
   ];
@@ -124,6 +215,12 @@ const ManageItemsScreen: React.FC<Props> = ({navigation}) => {
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
+      />
+
+      <QRCodeModal
+        show={modalVisible}
+        close={() => setModalVisible(false)}
+        qrCodeValue={qrCodeValue!}
       />
     </ScreenWrapper>
   );

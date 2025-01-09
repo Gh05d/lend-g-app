@@ -9,6 +9,7 @@ import dayjs from "dayjs";
 import AppText from "../../../components/AppText";
 import AppButton from "../../../components/AppButton";
 import ScreenWrapper from "../../../components/ScreenWrapper";
+import {formatPrice, germanDate} from "../../../common/functions";
 
 type Props = CompositeScreenProps<
   StackScreenProps<ManageItemsStackParamList, "Requests">,
@@ -33,8 +34,7 @@ const RequestScreen: React.FC<Props> = ({route, navigation}) => {
           `/api/requests/${requestID}`,
         );
 
-        const foundRequest = data.request;
-
+        const foundRequest = data?.request;
         setRequest(foundRequest);
 
         if (foundRequest) {
@@ -112,60 +112,71 @@ const RequestScreen: React.FC<Props> = ({route, navigation}) => {
         </AppText>
         <AppText>Anzahl der Tage: {days}</AppText>
         <AppText>
-          Zeitraum: {request?.timeFrame.startDate} -{" "}
-          {request?.timeFrame.endDate}
+          Zeitraum: {germanDate(request?.timeFrame.startDate)} -{" "}
+          {germanDate(request?.timeFrame.endDate)}
         </AppText>
 
         <View style={{gap: 12, marginTop: 12}}>
           <AppText>
-            Preis: {price} € ({request?.price.replace(/€(\d+)/, "$1 € pro Tag")}
-            )
+            Preis: {price} € ({formatPrice(request?.price)})
           </AppText>
 
-          <View style={styles.inlineInput}>
-            <AppText style={{flex: 3}}>Kaution:</AppText>
-            <TextInput
-              value={deposit}
-              onChangeText={text => {
-                const cleanedText = text.replace(/[^0-9.]/g, "");
-                if (
-                  /^\d*\.?\d*$/.test(cleanedText) &&
-                  cleanedText.split(".").length <= 2
-                ) {
-                  setDeposit(cleanedText);
-                }
-              }}
-              onBlur={() => {
-                const numericValue = parseFloat(deposit);
-                if (isNaN(numericValue) || numericValue < 0) {
-                  setDeposit("0.00");
-                }
-                setTotalPrice(+price + numericValue);
-              }}
-              keyboardType="numeric"
-              placeholder="Kaution eingeben"
-              style={[
-                styles.input,
-                {backgroundColor: colors.card, color: colors.text},
-              ]}
-            />
-          </View>
+          {request?.status == "open" ? (
+            <View style={styles.inlineInput}>
+              <AppText style={{flex: 3}}>Kaution:</AppText>
+              <TextInput
+                editable={request?.status == "open"}
+                value={deposit}
+                onChangeText={text => {
+                  const cleanedText = text.replace(/[^0-9.]/g, "");
+                  if (
+                    /^\d*\.?\d*$/.test(cleanedText) &&
+                    cleanedText.split(".").length <= 2
+                  ) {
+                    setDeposit(cleanedText);
+                  }
+                }}
+                onBlur={() => {
+                  const numericValue = parseFloat(deposit);
+                  if (isNaN(numericValue) || numericValue < 0) {
+                    setDeposit("0.00");
+                  }
+                  setTotalPrice(+price + numericValue);
+                }}
+                keyboardType="numeric"
+                placeholder="Kaution eingeben"
+                style={[
+                  styles.input,
+                  {backgroundColor: colors.card, color: colors.text},
+                ]}
+              />
+            </View>
+          ) : (
+            <View style={styles.inlineInput}>
+              <AppText>Kaution: </AppText>
+              <AppText>{deposit} €</AppText>
+            </View>
+          )}
 
           <AppText textSize="large" bold>
-            Gesamt: {totalPrice} €
+            Gesamt: {totalPrice.toFixed(2)} €
           </AppText>
         </View>
 
         <View style={{marginTop: "auto", gap: 12}}>
-          <AppButton
-            title="Genehmigen"
-            onPress={() => handleApprove(request?.id || "")}
-          />
-          <AppButton
-            outline
-            title="Ablehnen"
-            onPress={() => handleReject(request?.id || "")}
-          />
+          {request?.status == "open" && (
+            <>
+              <AppButton
+                title="Genehmigen"
+                onPress={() => handleApprove(request?.id || "")}
+              />
+              <AppButton
+                outline
+                title="Ablehnen"
+                onPress={() => handleReject(request?.id || "")}
+              />
+            </>
+          )}
           <AppButton
             title="Nutzer Kontaktieren"
             onPress={handleContactUser}

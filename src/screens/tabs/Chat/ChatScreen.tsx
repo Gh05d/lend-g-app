@@ -1,21 +1,23 @@
 import React, {useEffect, useState} from "react";
-import {FlatList, StyleSheet, View, TextInput, Image} from "react-native";
+import {FlatList, StyleSheet, View, TextInput, Keyboard} from "react-native";
 import {StackScreenProps} from "@react-navigation/stack";
 import {useTheme} from "@react-navigation/native";
 import dayjs from "dayjs";
-import QRCode from "react-native-qrcode-svg";
+import axios from "axios";
 
 import AppText from "../../../components/AppText";
 import ScreenWrapper from "../../../components/ScreenWrapper";
 import AppButton from "../../../components/AppButton";
 
-import {mockChats} from "../../../common/mockData";
+interface ChatMessages extends Chat {
+  messages: Message[];
+}
 
 type Props = StackScreenProps<ChatStackParamList, "Chat">;
 
 const UserChatScreen: React.FC<Props> = ({route}) => {
   const {chatID} = route.params as {chatID: string};
-  const [chat, setChat] = useState<Chat | null>(null);
+  const [chat, setChat] = useState<ChatMessages | null>(null);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -25,9 +27,14 @@ const UserChatScreen: React.FC<Props> = ({route}) => {
   useEffect(() => {
     const fetchChat = async () => {
       try {
-        const foundChat = mockChats.find(c => c.id === chatID);
+        await axios.patch(`/api/messages/read`, {chatID});
 
-        if (foundChat) setChat(foundChat);
+        const {data} = await axios.get<{chat: Chat}>(`api/chats/${chatID}`);
+        const res = await axios.get<{messages: Message[]}>(
+          `api/messages/${chatID}`,
+        );
+
+        if (data.chat) setChat({...data.chat, messages: res.data.messages});
         else throw new Error("Chat not found");
       } catch (err) {
         setError(err as Error);
@@ -39,24 +46,31 @@ const UserChatScreen: React.FC<Props> = ({route}) => {
     fetchChat();
   }, [chatID]);
 
-  const handleSendMessage = () => {
+  async function handleSendMessage() {
     if (!newMessage.trim()) return;
 
-    const newMsg: Message = {
+    const data: Message = {
       ownerID: chat?.ownerID!,
-      message: newMessage,
+      chatID,
+      text: newMessage,
       timestamp: new Date(),
     };
+
+    const {data: newMsg} = await axios.post("/api/messages", {data});
 
     setChat(prevChat => {
       if (!prevChat) return null;
       return {
         ...prevChat,
-        messages: [newMsg, ...prevChat.messages],
+        messages: [
+          ...prevChat.messages,
+          {...newMsg.message.data, id: newMsg.message.id},
+        ],
       };
     });
     setNewMessage("");
-  };
+    Keyboard.dismiss();
+  }
 
   const renderMessage = ({item}: {item: Message}) => (
     <View
@@ -68,25 +82,18 @@ const UserChatScreen: React.FC<Props> = ({route}) => {
             item.ownerID == chat?.ownerID ? colors.primary : colors.card,
         },
       ]}>
-      <AppText style={{color: colors.text}}>{item.message}</AppText>
+      <AppText style={{color: colors.text}}>{item.text}</AppText>
       <AppText style={styles.timestamp}>
-        {dayjs(item.timestamp).locale("de").fromNow()}
+        {dayjs(item.timestamp).locale("de").fromNow()} {item.read ? "✔✔" : "✔"}
       </AppText>
     </View>
   );
 
   return (
     <ScreenWrapper loading={loading} error={error}>
-      <Image
-        source={{
-          uri: `https://api.qrserver.com/v1/create-qr-code/?data=transaction-${chatID}&size=150x150`,
-        }}
-        style={{width: 150, height: 150}}
-      />
-
       <FlatList
         data={chat?.messages}
-        keyExtractor={(item, index) => index.toString()}
+        keyExtractor={item => item.id}
         renderItem={renderMessage}
         contentContainerStyle={styles.messagesContainer}
       />
@@ -100,17 +107,21 @@ const UserChatScreen: React.FC<Props> = ({route}) => {
             styles.input,
             {backgroundColor: colors.card, color: colors.text},
           ]}
+          multiline
+          onSubmitEditing={handleSendMessage}
         />
-        <AppButton title="Senden" onPress={handleSendMessage} />
+        <AppButton
+          disabled={!newMessage}
+          title="Senden"
+          onPress={handleSendMessage}
+        />
       </View>
     </ScreenWrapper>
   );
 };
 
 const styles = StyleSheet.create({
-  messagesContainer: {
-    padding: 16,
-  },
+  messagesContainer: {padding: 16},
   message: {
     padding: 12,
     borderRadius: 8,

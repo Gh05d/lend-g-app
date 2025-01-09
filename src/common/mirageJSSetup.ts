@@ -1,7 +1,16 @@
-import {createServer, Factory, Model, belongsTo, hasMany} from "miragejs";
-import {faker} from "@faker-js/faker";
+import {
+  createServer,
+  Factory,
+  Model,
+  belongsTo,
+  hasMany,
+  Response,
+} from "miragejs";
+import {fakerDE as faker} from "@faker-js/faker";
 import {ModelDefinition, Registry} from "miragejs/-types";
 import Schema from "miragejs/orm/schema";
+import {randomIntFromInterval} from "./functions";
+import {PublicKey} from "@solana/web3.js";
 
 const ChatModel: ModelDefinition<Chat> = Model.extend({messages: hasMany()});
 const MessageModel: ModelDefinition<Message> = Model.extend({
@@ -152,7 +161,10 @@ globalThis.server = createServer({
       timeFrame() {
         return {
           startDate: faker.date.soon().toISOString().split("T")[0],
-          endDate: faker.date.future().toISOString().split("T")[0],
+          endDate: faker.date
+            .soon({days: randomIntFromInterval(2, 15)})
+            .toISOString()
+            .split("T")[0],
         };
       },
       status() {
@@ -171,13 +183,38 @@ globalThis.server = createServer({
     server.createList("user", 15);
 
     const chat1 = server.create("chat", {ownerID: user1.id, userID: user2.id});
-    server.createList("message", 5, {chatID: chat1.id});
+    server.create("message", {
+      chatID: chat1.id,
+      ownerID: user2.id,
+      read: faker.date.recent().toISOString(),
+    });
+    server.create("message", {
+      chatID: chat1.id,
+      ownerID: user2.id,
+      read: faker.date.recent().toISOString(),
+    });
+    server.create("message", {
+      chatID: chat1.id,
+      ownerID: user1.id,
+      read: faker.date.recent().toISOString(),
+    });
+    server.create("message", {chatID: chat1.id, ownerID: user2.id});
 
     const chat2 = server.create("chat", {
       ownerID: user1.id,
       userID: user3.id,
     });
-    server.createList("message", 3, {chatID: chat2.id});
+    server.create("message", {
+      chatID: chat2.id,
+      ownerID: user3.id,
+      read: faker.date.recent().toISOString(),
+    });
+    server.create("message", {
+      chatID: chat2.id,
+      ownerID: user3.id,
+      read: faker.date.recent().toISOString(),
+    });
+    server.create("message", {chatID: chat2.id, ownerID: user1.id});
 
     const chat3 = server.create("chat", {ownerID: user4.id, userID: user4.id});
     server.createList("message", 5, {chatID: chat3.id});
@@ -186,27 +223,34 @@ globalThis.server = createServer({
     const listData2 = server.createList("item", 6, {userID: user2.id});
     const listData3 = server.createList("item", 8, {userID: user3.id});
 
+    server.createList("request", 2, {
+      ownerID: user1.id,
+      itemID: listData[randomIntFromInterval(0, 3)].id,
+      requesterID: user2.id,
+      status: "open",
+    });
+
     server.createList("request", 5, {
       ownerID: user1.id,
-      itemID: listData[0].id,
+      itemID: listData[randomIntFromInterval(0, 3)].id,
       requesterID: user2.id,
     });
     server.createList("request", 2, {
       ownerID: user3.id,
       requesterID: user4.id,
-      itemID: listData3[0].id,
+      itemID: listData3[randomIntFromInterval(0, 7)].id,
       status: "open",
     });
     server.createList("request", 3, {
       ownerID: user1.id,
       requesterID: user1.id,
-      itemID: listData[1].id,
+      itemID: listData[randomIntFromInterval(0, 3)].id,
       status: "accepted",
     });
     server.createList("request", 2, {
       ownerID: user2.id,
       requesterID: user4.id,
-      itemID: listData2[0].id,
+      itemID: listData2[randomIntFromInterval(0, 5)].id,
       status: "denied",
     });
   },
@@ -224,19 +268,94 @@ globalThis.server = createServer({
     });
 
     this.get("/users/bulk", (schema: AppSchema, request) => {
-      const userIDs = request.queryParams.userIDs?.split(",");
+      const userIDs = request.queryParams.userIDs?.split(",") || [];
       return schema.where("user", user => userIDs.includes(user.id));
     });
 
-    this.get("/requests/user/:id", (schema, request) => {
-      const ownerID = request.params.id;
-      const {status} = request.queryParams;
+    this.get("/chats/:id", (schema, request) => {
+      let chatID = request.params.id;
+      return schema.find("chat", chatID);
+    });
 
-      let requests = schema.where("request", {ownerID}).models;
+    this.get("/chats/user/:userID", (schema: AppSchema, request) => {
+      const {userID} = request.params;
 
-      if (status) {
-        requests = requests.filter(item => item.status === status);
-      }
+      const chats = schema.where(
+        "chat",
+        chat => chat.ownerID === userID || chat.userID === userID,
+      ).models;
+
+      return chats.map(chat => {
+        const messages = schema.where("message", {chatID: chat.id}).models;
+        const lastMessage = messages.sort(
+          (a, b) => +new Date(b.timestamp) - +new Date(a.timestamp),
+        )[0];
+
+        return {
+          ...chat.attrs,
+          lastMessage: lastMessage ? lastMessage.attrs : null,
+        };
+      });
+    });
+
+    this.get("/messages/:chatID", (schema, {params}) => {
+      const {chatID} = params;
+
+      return schema.where("message", {chatID});
+    });
+
+    this.post("/messages", (schema, request) => {
+      let attrs = JSON.parse(request.requestBody);
+      return schema.create("message", attrs);
+    });
+
+    this.patch("/messages/read", (schema, request) => {
+      const {chatID} = JSON.parse(request.requestBody);
+
+      const messages = schema.where("message", {chatID, read: null}).models;
+
+      messages.forEach(message => {
+        message.update({read: new Date().toISOString()});
+      });
+
+      return {success: true, updatedCount: messages.length};
+    });
+
+    this.get("/items", schema => {
+      return schema.all("item");
+    });
+
+    this.get("/items/:id", (schema, request) => {
+      const itemID = request.params.id;
+      return schema.find("item", itemID);
+    });
+
+    this.get("/items/user/:userID", (schema, request) => {
+      const {userID} = request.params;
+      return schema.where("item", {userID});
+    });
+
+    this.get("/items/rentedBy/:userID", (schema, request) => {
+      const {userID} = request.params;
+      return schema.where("item", {currentlyRentedBy: userID});
+    });
+
+    this.get("/items/rentedFrom/:userID", (schema, request) => {
+      const {userID} = request.params;
+
+      return schema.where(
+        "item",
+        item => item.userID == userID && item.currentlyRentedBy != null,
+      ).models;
+    });
+
+    this.get("/requests/to-user", (schema, request) => {
+      const {ownerID, status} = request.queryParams;
+
+      const query = {ownerID};
+      if (status) query.status = status;
+
+      let requests = schema.where("request", query).models;
 
       return requests.map(el => {
         const requester = schema.find("user", el.requesterID);
@@ -250,45 +369,24 @@ globalThis.server = createServer({
       });
     });
 
-    this.get("/chats", schema => {
-      return schema.all("chat");
-    });
+    this.get("/requests/from-user", (schema, request) => {
+      const {requesterID, status} = request.queryParams;
 
-    this.get("/chats/:id", (schema, request) => {
-      let chatID = request.params.id;
-      return schema.find("chat", chatID);
-    });
+      const query = {requesterID};
+      if (status) query.status = status;
 
-    this.get("/messages", schema => {
-      return schema.all("message");
-    });
+      let requests = schema.where("request", query).models;
 
-    this.post("/messages", (schema, request) => {
-      let attrs = JSON.parse(request.requestBody);
-      return schema.create("message", attrs);
-    });
+      return requests.map(el => {
+        const requester = schema.find("user", el.requesterID);
+        const item = schema.find("item", el.itemID);
 
-    this.get("/items", schema => {
-      return schema.all("item");
-    });
-
-    this.get("/items/:id", (schema, request) => {
-      const itemID = request.params.id;
-      return schema.find("item", itemID);
-    });
-
-    this.get("/items/user/:id", (schema, request) => {
-      const userID = request.params.id;
-      return schema.where("item", {userID});
-    });
-
-    this.get("/items/rentedBy/:userID", (schema, request) => {
-      const {userID} = request.params;
-      return schema.where("item", {currentlyRentedBy: userID});
-    });
-
-    this.get("/requests", schema => {
-      return schema.all("request");
+        return {
+          ...el.attrs,
+          requester: requester ? requester.attrs : null,
+          item: item ? item.attrs : null,
+        };
+      });
     });
 
     this.get("/requests/:id", (schema, request) => {
@@ -296,9 +394,49 @@ globalThis.server = createServer({
       return schema.find("request", requestID);
     });
 
-    this.post("/requests", (schema, request) => {
-      let attrs = JSON.parse(request.requestBody);
+    this.post("/requests", (schema, req) => {
+      let attrs = JSON.parse(req.requestBody);
       return schema.create("request", attrs);
+    });
+
+    this.patch("/qr/scan", (schema, req) => {
+      const {requestID} = JSON.parse(req.requestBody);
+
+      const request = schema.where("request", {
+        id: requestID,
+        status: "accepted",
+      }).models[0];
+      if (!request) {
+        return new Response(404, {}, {errors: ["Request not found"]});
+      }
+      request.update({status: "active"});
+
+      const item = schema.find("item", request.itemID);
+      if (!item) return new Response(404, {}, {errors: ["Item not found"]});
+
+      item.update({currentlyRentedBy: request.requesterID});
+
+      return {success: true};
+    });
+
+    this.post("/api/auth", (schema, request) => {
+      const {address, signature} = JSON.parse(request.requestBody);
+
+      // Nachricht zur Verifizierung
+      const message = `Bitte signiere diese Nachricht: ${nonce}`;
+      const publicKey = new PublicKey(address);
+
+      // Verifizieren der Signatur
+      const isValid = publicKey.verifyMessage(
+        Buffer.from(message),
+        Buffer.from(signature, "base64"),
+      );
+
+      if (isValid) {
+        return {message: "Login erfolgreich!", user: {address}};
+      } else {
+        return new Response(401, {error: "Ungültige Signatur."});
+      }
     });
   },
 });

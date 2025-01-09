@@ -1,10 +1,11 @@
-import React, {useState, useEffect, useContext} from "react";
+import React, {useState, useContext} from "react";
 import {
   Appearance,
   View,
   StyleSheet,
   useColorScheme,
   ScrollView,
+  Image,
 } from "react-native";
 import {useTheme} from "@react-navigation/native";
 import {BottomTabScreenProps} from "@react-navigation/bottom-tabs";
@@ -37,22 +38,39 @@ const ProfileScreen: React.FC<Props> = () => {
   }
 
   const renderField = (key: string, value: any) => {
-    if (typeof value === "object" && value) {
-      return (
-        <View key={key} style={{marginLeft: 16}}>
-          <AppText bold>{formatLabel(key)}:</AppText>
-          {Object.entries(value).map(([nestedKey, nestedValue]) =>
-            renderField(nestedKey, nestedValue),
-          )}
-        </View>
-      );
-    }
+    switch (key) {
+      case "password":
+      case "id":
+        return null;
 
-    return (
-      <AppText key={key} style={{color: colors.text}}>
-        {formatLabel(key)}: {String(value)}
-      </AppText>
-    );
+      case "profilePicture":
+        return (
+          <Image
+            key={key}
+            source={{uri: value}}
+            style={{width: 200, height: 200, borderRadius: 400}}
+          />
+        );
+
+      default: {
+        if (typeof value === "object" && value) {
+          return (
+            <View key={key} style={{marginLeft: 16}}>
+              <AppText bold>{formatLabel(key)}:</AppText>
+              {Object.entries(value).map(([nestedKey, nestedValue]) =>
+                renderField(nestedKey, nestedValue),
+              )}
+            </View>
+          );
+        }
+
+        return (
+          <AppText key={key}>
+            {formatLabel(key)}: {value}
+          </AppText>
+        );
+      }
+    }
   };
 
   return (

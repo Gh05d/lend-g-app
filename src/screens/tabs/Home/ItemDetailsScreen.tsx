@@ -49,8 +49,8 @@ const ItemDetailsScreen: React.FC<Props> = ({route, navigation}) => {
   }, [id, userID]);
 
   function handleSubmit(dateRange: DateRangeType) {
-    const isConflict = item?.rentedPeriods
-      ? item?.rentedPeriods.some(
+    const isConflict = item?.pastRentals
+      ? item?.pastRentals.some(
           period =>
             dayjs(dateRange.startDate).isBetween(
               period.startDate,
@@ -102,7 +102,7 @@ const ItemDetailsScreen: React.FC<Props> = ({route, navigation}) => {
   }
 
   function renderPricing() {
-    const purePrice = parseInt(item?.price.replace("€", ""), 10);
+    const purePrice = parseInt(item?.price.replace("€", "") || "0", 10);
 
     const pricingIntervals = [
       {label: "Täglich", price: item?.price},
@@ -131,9 +131,9 @@ const ItemDetailsScreen: React.FC<Props> = ({route, navigation}) => {
   }
 
   function isDateDisabled(date: DateType) {
-    if (!item?.rentedPeriods?.length) return false;
+    if (!item?.pastRentals?.length) return false;
 
-    return item.rentedPeriods.some(period =>
+    return item.pastRentals.some(period =>
       dayjs(date).isBetween(period.startDate, period.endDate, null, "[]"),
     );
   }

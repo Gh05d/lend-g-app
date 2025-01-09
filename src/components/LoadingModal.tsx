@@ -32,13 +32,15 @@ const styles = StyleSheet.create({
   modal: {
     borderRadius: 10,
     padding: 20,
-    boxShadow: {
-      offsetX: 5,
-      offsetY: 5,
-      blurRadius: 5,
-      spreadDistance: 0,
-      color: "rgba(255, 0, 0, 0.5)",
-    },
+    boxShadow: [
+      {
+        offsetX: 5,
+        offsetY: 5,
+        blurRadius: 5,
+        spreadDistance: 0,
+        color: "rgba(255, 0, 0, 0.5)",
+      },
+    ],
   },
 });
 

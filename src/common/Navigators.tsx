@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useContext} from "react";
 import {Image} from "react-native";
 import {RouteProp, useTheme} from "@react-navigation/native";
 import {createDrawerNavigator} from "@react-navigation/drawer";
@@ -8,7 +8,7 @@ import Icon from "react-native-vector-icons/FontAwesome";
 
 import HomeScreen from "../screens/tabs/Home/HomeScreen";
 import ManageItemsScreen from "../screens/tabs/ManageItems/ManageItemsScreen";
-import ExploreScreen from "../screens/tabs/ExploreScreen";
+import QRCodeScreen from "../screens/tabs/QRCodeScreen";
 import ChatsScreen from "../screens/tabs/Chat/ChatsScreen";
 import ProfileScreen from "../screens/tabs/ProfileScreen";
 import NotificationsScreen from "../screens/sidebar/NotificationsScreen";
@@ -20,8 +20,14 @@ import ItemDetailsScreen from "../screens/tabs/Home/ItemDetailsScreen";
 import ConfirmationScreen from "../screens/tabs/Home/ConfirmationScreen";
 import RequestsScreen from "../screens/tabs/ManageItems/RequestScreen";
 import ChatScreen from "../screens/tabs/Chat/ChatScreen";
+import LoginScreen from "../screens/authentication/LoginScreen";
+import SignUpScreen from "../screens/authentication/SignUpScreen";
 
 import Header from "../components/Header";
+import {UserContext} from "./variables";
+import UseExistingWallet from "../screens/authentication/UseExistingWalletScreen";
+import NewWallet from "../screens/authentication/NewWalletScreen";
+import CompleteSignUp from "../screens/authentication/CompleteSignUpScreen";
 
 const renderHeader = (title: string): JSX.Element => <Header title={title} />;
 const renderUserPicture = (route: RouteProp<ChatStackParamList, "Chat">) => (
@@ -33,6 +39,8 @@ const renderUserPicture = (route: RouteProp<ChatStackParamList, "Chat">) => (
 
 const Drawer = createDrawerNavigator<DrawerParamList>();
 const Tab = createBottomTabNavigator<TabParamList>();
+
+const AuthStack = createStackNavigator<AuthStackParamList>();
 const HomeStack = createStackNavigator<HomeStackParamList>();
 const ManageItemsStack = createStackNavigator<ManageItemsStackParamList>();
 const ChatStack = createStackNavigator<ChatStackParamList>();
@@ -137,7 +145,11 @@ const tabScreens: Array<{
     component: ManageItemsStackNavigator,
     options: {title: "Leihübersicht"},
   },
-  {name: "Explore", component: ExploreScreen, options: {title: "Entdecken"}},
+  {
+    name: "QRCodes",
+    component: QRCodeScreen,
+    options: {title: "QR Codes verwalten"},
+  },
   {
     name: "ChatsStack",
     component: ChatStackNavigator,
@@ -160,8 +172,8 @@ const getTabBarIcon = (
     case "ManageItemsStack":
       iconName = "money";
       break;
-    case "Explore":
-      iconName = "search";
+    case "QRCodes":
+      iconName = "qrcode";
       break;
     case "ChatsStack":
       iconName = "comments";
@@ -206,14 +218,33 @@ const DrawerNavigator: React.FC = () => (
   </Drawer.Navigator>
 );
 
-const RootNavigator: React.FC = () => (
-  <HomeStack.Navigator>
-    <HomeStack.Screen
-      name="Drawer"
-      component={DrawerNavigator}
-      options={{headerShown: false}}
-    />
-  </HomeStack.Navigator>
-);
+const RootNavigator: React.FC = () => {
+  const {user} = useContext(UserContext);
+
+  if (user) {
+    return (
+      <HomeStack.Navigator>
+        <HomeStack.Screen
+          name="Drawer"
+          component={DrawerNavigator}
+          options={{headerShown: false}}
+        />
+      </HomeStack.Navigator>
+    );
+  }
+
+  return (
+    <AuthStack.Navigator screenOptions={{headerShown: false}}>
+      <AuthStack.Screen name="Login" component={LoginScreen} />
+      <AuthStack.Screen name="SignUp" component={SignUpScreen} />
+      <AuthStack.Screen
+        name="UseExistingWallet"
+        component={UseExistingWallet}
+      />
+      <AuthStack.Screen name="NewWallet" component={NewWallet} />
+      <AuthStack.Screen name="CompleteSignUp" component={CompleteSignUp} />
+    </AuthStack.Navigator>
+  );
+};
 
 export default RootNavigator;
