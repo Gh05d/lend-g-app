@@ -12,7 +12,7 @@ const LoadingModal: React.FC<Props> = ({loading, testID, text = "Loading"}) => (
   <Modal animationType="fade" visible={loading} transparent>
     <View style={styles.overlay} />
     <View style={styles.outerContainer}>
-      <Loading testID={testID} style={styles.modal} inline text={text} />
+      <Loading testID={testID} style={styles.modal} text={text} />
     </View>
   </Modal>
 );
@@ -32,6 +32,7 @@ const styles = StyleSheet.create({
   modal: {
     borderRadius: 10,
     padding: 20,
+    backgroundColor: "#fff",
     boxShadow: [
       {
         offsetX: 5,

@@ -5,6 +5,7 @@ import {NavigationContainer} from "@react-navigation/native";
 import {SafeAreaProvider} from "react-native-safe-area-context";
 import "./common/mirageJSSetup";
 
+import NewUserModal from "./components/modals/NewUserModal";
 import RootNavigator from "./common/Navigators";
 import {CustomDarkTheme, CustomLightTheme} from "./themes";
 import {navigationRef, UserContext} from "./common/variables";
@@ -21,6 +22,7 @@ const linking = {
 };
 
 const App: React.FC = () => {
+  const [showNewUserModal, setNewUserModal] = useState(false);
   const [initiated, setInitiated] = useState(false);
   const [show, toggle] = useState(true);
   const [user, setUser] = useState<null | User>(null);
@@ -60,17 +62,9 @@ const App: React.FC = () => {
   );
 
   useEffect(() => {
-    (async function fetchUser() {
-      try {
-        // const {data} = await axios.get<{users: User[]}>("/api/users");
-        // setUser(data.users[0]);
-      } catch (error) {
-        console.error("Failed to fetch user:", error);
-      } finally {
-        setInitiated(true);
-      }
-    })();
-  }, []);
+    if (user && !user.userName) setNewUserModal(true);
+    setInitiated(true);
+  }, [user?.userName, user]);
 
   // Gets called if the App is running or in the background
   useEffect(() => {
@@ -119,6 +113,11 @@ const App: React.FC = () => {
           ref={navigationRef}
           theme={scheme === "dark" ? CustomDarkTheme : CustomLightTheme}>
           <RootNavigator />
+
+          <NewUserModal
+            show={showNewUserModal}
+            close={() => setNewUserModal(false)}
+          />
         </NavigationContainer>
       </SafeAreaProvider>
     </UserContext.Provider>

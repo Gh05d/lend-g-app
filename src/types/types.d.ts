@@ -19,9 +19,6 @@ declare global {
   type AuthStackParamList = {
     Login: undefined;
     SignUp: undefined;
-    NewWallet: undefined;
-    CompleteSignUp: undefined;
-    UseExistingWallet: undefined;
   };
 
   type HomeStackParamList = {

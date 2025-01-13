@@ -10,6 +10,7 @@ import AppText from "../../../components/AppText";
 import AppButton from "../../../components/AppButton";
 import ScreenWrapper from "../../../components/ScreenWrapper";
 import {formatPrice, germanDate} from "../../../common/functions";
+import {boxShadow} from "../../../common/variables";
 
 type Props = CompositeScreenProps<
   StackScreenProps<ManageItemsStackParamList, "Requests">,
@@ -106,7 +107,8 @@ const RequestScreen: React.FC<Props> = ({route, navigation}) => {
 
   return (
     <ScreenWrapper loading={loading} error={error}>
-      <View style={[styles.container, {backgroundColor: colors.card}]}>
+      <View
+        style={[styles.container, {backgroundColor: colors.card, boxShadow}]}>
         <AppText textSize="heading" bold>
           Anfrage von: {user?.userName || "Laden..."}
         </AppText>
@@ -193,7 +195,6 @@ const styles = StyleSheet.create({
     gap: 16,
     padding: 16,
     borderRadius: 8,
-    boxShadow: "0 0 4px rgba(0, 0, 0, 0.6)",
     marginBottom: 12,
     height: "100%",
   },

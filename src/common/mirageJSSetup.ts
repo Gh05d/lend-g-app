@@ -9,8 +9,8 @@ import {
 import {fakerDE as faker} from "@faker-js/faker";
 import {ModelDefinition, Registry} from "miragejs/-types";
 import Schema from "miragejs/orm/schema";
-import {randomIntFromInterval} from "./functions";
-import {PublicKey} from "@solana/web3.js";
+
+import {randomIntFromInterval, validateEmail} from "./functions";
 
 const ChatModel: ModelDefinition<Chat> = Model.extend({messages: hasMany()});
 const MessageModel: ModelDefinition<Message> = Model.extend({
@@ -58,9 +58,6 @@ globalThis.server = createServer({
       lastName() {
         return faker.person.lastName();
       },
-      gender() {
-        return faker.person.sex();
-      },
       email() {
         return faker.internet.email();
       },
@@ -70,9 +67,6 @@ globalThis.server = createServer({
       userName() {
         return faker.internet.username();
       },
-      password() {
-        return faker.internet.password();
-      },
       birthDate() {
         return faker.date
           .birthdate({min: 18, max: 65, mode: "age"})
@@ -81,6 +75,9 @@ globalThis.server = createServer({
       },
       profilePicture() {
         return faker.image.avatar();
+      },
+      walletAddress() {
+        return null;
       },
     }),
 
@@ -174,7 +171,13 @@ globalThis.server = createServer({
   },
 
   seeds(server) {
-    const user1 = server.create("user");
+    const user1 = server.create("user", {
+      userName: "Pasqualle",
+      firstName: "Pascal",
+      lastName: "Qualle",
+      email: "clap@mailbox.org",
+      walletAddress: "BcgQvXk396ZrTEr5hMFKiQqgUHGSzNTLjBq6WLnqFLAY",
+    });
     const user2 = server.create("user");
     const user3 = server.create("user");
     const user4 = server.create("user");
@@ -406,9 +409,11 @@ globalThis.server = createServer({
         id: requestID,
         status: "accepted",
       }).models[0];
+
       if (!request) {
         return new Response(404, {}, {errors: ["Request not found"]});
       }
+
       request.update({status: "active"});
 
       const item = schema.find("item", request.itemID);
@@ -419,24 +424,92 @@ globalThis.server = createServer({
       return {success: true};
     });
 
-    this.post("/api/auth", (schema, request) => {
-      const {address, signature} = JSON.parse(request.requestBody);
+    // this.post("/api/auth", (schema, request) => {
+    //   const {address, signature} = JSON.parse(request.requestBody);
 
-      // Nachricht zur Verifizierung
-      const message = `Bitte signiere diese Nachricht: ${nonce}`;
-      const publicKey = new PublicKey(address);
+    //   // Nachricht zur Verifizierung
+    //   const message = `Bitte signiere diese Nachricht: ${nonce}`;
+    //   const publicKey = new PublicKey(address);
 
-      // Verifizieren der Signatur
-      const isValid = publicKey.verifyMessage(
-        Buffer.from(message),
-        Buffer.from(signature, "base64"),
-      );
+    //   // Verifizieren der Signatur
+    //   const isValid = publicKey.verifyMessage(
+    //     Buffer.from(message),
+    //     Buffer.from(signature, "base64"),
+    //   );
 
-      if (isValid) {
-        return {message: "Login erfolgreich!", user: {address}};
-      } else {
-        return new Response(401, {error: "Ungültige Signatur."});
+    //   if (isValid) {
+    //     return {message: "Login erfolgreich!", user: {address}};
+    //   } else {
+    //     return new Response(401, {error: "Ungültige Signatur."});
+    //   }
+    // });
+    this.post("/user", (schema, request) => {
+      const {walletAddress} = JSON.parse(request.requestBody);
+
+      const userExists = schema.where("user", {walletAddress});
+
+      if (userExists?.models.length) {
+        return new Response(404, {}, {errors: ["User exists"]});
       }
+
+      return schema.create("user", {walletAddress});
+    });
+
+    this.patch("/init-user", async (schema, request) => {
+      const {userName, email, id} = JSON.parse(request.requestBody);
+
+      const userExists = schema.where("user", {
+        id,
+        userName: undefined,
+        email: undefined,
+      }).models[0];
+
+      if (!userExists) {
+        return new Response(404, {}, {errors: ["User does not exist!"]});
+      }
+
+      const userNameExists = schema.where("user", {userName}).models[0];
+      const emailExists = schema.where("user", {email}).models[0];
+
+      if (userNameExists) {
+        return new Response(404, {}, {errors: ["Username taken!"]});
+      }
+
+      if (emailExists) {
+        return new Response(404, {}, {errors: ["Email taken!"]});
+      }
+
+      await userExists.update({userName, email});
+
+      return userExists;
+    });
+
+    this.patch("/email", async (schema, request) => {
+      const {email, id} = JSON.parse(request.requestBody);
+
+      if (!validateEmail(email)) {
+        return new Response(404, {}, {errors: ["Invalid Email!"]});
+      }
+
+      const userExists = schema.find("user", id);
+
+      if (!userExists) {
+        return new Response(404, {}, {errors: ["User does not exist!"]});
+      }
+
+      await userExists.update({email});
+
+      return userExists;
+    });
+
+    this.get("/login/:walletAddress", (schema, request) => {
+      const {walletAddress} = request.params;
+
+      const user = schema.where("user", {walletAddress}).models[0];
+
+      if (!user) return new Response(404, {}, {errors: ["User not found!"]});
+
+      return user;
     });
   },
 });

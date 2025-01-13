@@ -1,7 +1,12 @@
 {
   "extends": "@react-native/typescript-config/tsconfig.json",
   "compilerOptions": {
-    "typeRoots": ["./src/types", "./node_modules/@types"]
+    "typeRoots": ["./src/types", "./node_modules/@types"],
+    "paths": {
+      "@solana-mobile/mobile-wallet-adapter-protocol-web3js": [
+        "./node_modules/@solana-mobile/mobile-wallet-adapter-protocol-web3js/lib/types/index.d.ts"
+      ]
+    }
   },
   "include": ["src/**/*"]
 }

@@ -25,9 +25,6 @@ import SignUpScreen from "../screens/authentication/SignUpScreen";
 
 import Header from "../components/Header";
 import {UserContext} from "./variables";
-import UseExistingWallet from "../screens/authentication/UseExistingWalletScreen";
-import NewWallet from "../screens/authentication/NewWalletScreen";
-import CompleteSignUp from "../screens/authentication/CompleteSignUpScreen";
 
 const renderHeader = (title: string): JSX.Element => <Header title={title} />;
 const renderUserPicture = (route: RouteProp<ChatStackParamList, "Chat">) => (
@@ -237,12 +234,6 @@ const RootNavigator: React.FC = () => {
     <AuthStack.Navigator screenOptions={{headerShown: false}}>
       <AuthStack.Screen name="Login" component={LoginScreen} />
       <AuthStack.Screen name="SignUp" component={SignUpScreen} />
-      <AuthStack.Screen
-        name="UseExistingWallet"
-        component={UseExistingWallet}
-      />
-      <AuthStack.Screen name="NewWallet" component={NewWallet} />
-      <AuthStack.Screen name="CompleteSignUp" component={CompleteSignUp} />
     </AuthStack.Navigator>
   );
 };
